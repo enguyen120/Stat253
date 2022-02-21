@@ -339,41 +339,18 @@ tidy(Credit_final_fit)
 c.
 
 ```{r}
-#  calculate/collect CV metrics
-mod_final %>% collect_metrics()
+mod_ols <- fit_resamples(life_model_wf, 
+      resamples = lifeexpectancy_cv7, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+
+mod_lasso <- fit_resamples(life_final_wf, 
+      resamples = lifeexpectancy_cv7, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
 ```
-
-
-```{r}
-## I don't think we need any of this, saving it anyways cause we might need for our first model???
-
-
-full_model <- fit(lm_spec,
-             ~ .,  # The . means all predictors
-            data = bodyfat_train) 
-
-fit(lm_spec,
-  fatSiri ~ . - hip,  
-  data = bodyfat_train) %>% 
-  tidy() %>%
-  arrange(desc(p.value))
-
-fit(lm_spec,
-  fatSiri ~ . - hip - chest,  
-  data = bodyfat_train) %>% 
-  tidy() %>%
-  arrange(desc(p.value))
-
-
-fit(lm_spec,
-  fatSiri ~ . - hip - chest - height,  
-  data = bodyfat_train) %>% 
-  tidy() %>%
-  arrange(desc(p.value))
-
-full_model %>% tidy() %>% arrange(desc(p.value))
-```
-
 
 d.
 
@@ -401,7 +378,7 @@ e.
 2. **Summarize investigations**
     - Decide on an overall best model based on your investigations so far. To do this, make clear your analysis goals. Predictive accuracy? Interpretability? A combination of both?
 
-
+Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a country's average life expectancy rather than, for example, trying to predict a country's average life expectancy based on various socioeconomic factors. This is not only because the first approach is more useful but also because the latter is an ineffective way of trying to accomplish its goal.
 
 <br>
 
