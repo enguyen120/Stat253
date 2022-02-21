@@ -224,7 +224,7 @@ lifeExpectancy <-lifeExpectancy %>%
 
 ```{r}
 set.seed(321)
-lifeexpectancy_cv10 <- vfold_cv(lifeExpectancyData, v = 11)
+lifeexpectancy_cv10 <- vfold_cv(lifeExpectancy, v = 11)
 ```
 
 
