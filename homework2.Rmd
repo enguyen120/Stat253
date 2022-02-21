@@ -20,5 +20,6 @@ health <- read_csv("worldbank.csv")
 ```{r}
 health <- health %>%
   filter(`2018 [YR2018]`!="..") %>%
-  filter(`Country Code` !="VIR")
+  filter(`Country Code` !="VIR") %>%
+  filter(`Country Code` !="ABW")
 ```
