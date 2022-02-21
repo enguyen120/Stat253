@@ -1,6 +1,6 @@
 ---
 title: "homework2"
-author: "Ben Christensen"
+author:
 date: "2/20/2022"
 output: html_document
 ---
