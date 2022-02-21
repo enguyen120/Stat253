@@ -296,8 +296,8 @@ lm_lasso_spec_tune <-
   set_engine(engine = 'glmnet') %>%
   set_mode('regression') 
 
-lasso_wf_Credit <- workflow() %>% 
-  add_recipe(Credit_rec) %>%
+lasso_wf_lifeex <- workflow() %>% 
+  add_recipe(life_rec) %>%
   add_model(lm_lasso_spec_tune) 
 
 penalty_grid <- grid_regular(
@@ -305,8 +305,8 @@ penalty_grid <- grid_regular(
   levels = 50)
 
 tune_res <- tune_grid( # new function for tuning hyperparameters
-  lasso_wf_Credit, # workflow
-  resamples = Credit_cv10, # folds
+  lasso_wf_lifeex, # workflow
+  resamples = lifeexpectancy_cv10, # folds
   metrics = metric_set(rmse),
   grid = penalty_grid # penalty grid
 )
@@ -320,9 +320,9 @@ collect_metrics(tune_res) %>%
 
 best_penalty <- select_best(tune_res, metric = 'rmse') # choose best penalty value
 
-Credit_final_wk <- finalize_workflow(lasso_wf_Credit, best_penalty) # incorporates penalty value to workflow
+life_final_wk <- finalize_workflow(lasso_wf_lifeex, best_penalty) # incorporates penalty value to workflow
 
-Credit_final_fit <- fit(Credit_final_wk, data = Credit)
+lifeex_final_fit <- fit(Credit_final_wk, data = lifeExpectancyData)
 
 tidy(Credit_final_fit)
 
