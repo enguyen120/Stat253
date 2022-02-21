@@ -203,10 +203,12 @@ lifeExpectancyData <- health %>%
 ```{r}
 lifeExpectancy<- pivot_wider(lifeExpectancyData, names_from = "Series Name", values_from = "2018 [YR2018]")
 ```
+
 ```{r}
 lifeExpectancy <- lifeExpectancy %>%
   select(-`Life expectancy at birth, female (years)`) %>%
-  select(-`Life expectancy at birth, male (years)`)
+  select(-`Life expectancy at birth, male (years)`) %>%
+  select(-`Multidimensional poverty headcount ratio, household (% of total households)`)
 ```
 
 # creation of cv folds
