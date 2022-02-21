@@ -208,7 +208,7 @@ lifeExpectancy<- pivot_wider(lifeExpectancyData, names_from = "Series Name", val
 
 ```{r}
 set.seed(321)
-lifeexpectancy_cv10 <- vfold_cv(lifeExpectancyData, v = 10)
+lifeexpectancy_cv10 <- vfold_cv(lifeExpectancyData, v = 11)
 ```
 
 
