@@ -162,7 +162,8 @@ health <- health %>%
   filter(`Country Code` !="SYR") %>%
   filter(`Country Code` !="VEN") %>%
   filter(`Country Code` !="XKX") %>%
-  filter(`Country Code` !="YEM")
+  filter(`Country Code` !="YEM") %>%
+  filter(`Country Code` !="IDB")
 ```
 
 ```{r}
@@ -197,7 +198,7 @@ lifeExpectancyData <- health %>%
   select(-`2016 [YR2016]`) %>%
   select(-`2017 [YR2017]`) %>%
   select(-`2019 [YR2019]`) %>%
-  select(-`2020 [YR2020]`)
+  select(-`2020 [YR2020]`) 
 ```
 
 ```{r}
