@@ -240,7 +240,7 @@ c.
 
 ```{r}
 #  calculate/collect CV metrics
-
+mod_final %>% collect_metrics()
 ```
 
  
