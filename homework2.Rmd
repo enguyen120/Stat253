@@ -203,6 +203,11 @@ lifeExpectancyData <- health %>%
 ```{r}
 lifeExpectancy<- pivot_wider(lifeExpectancyData, names_from = "Series Name", values_from = "2018 [YR2018]")
 ```
+```{r}
+lifeExpectancy <- lifeExpectancy %>%
+  select(-`Life expectancy at birth, female (years)`) %>%
+  select(-`Life expectancy at birth, male (years)`)
+```
 
 # creation of cv folds
 
@@ -245,13 +250,13 @@ lm_spec <-
     set_mode('regression') # we'll talk about other modes such as classification later
 
 homes_model_wf <- workflow() %>%
-  add_recipe(homes_rec) %>% 
+  add_recipe() %>% 
   add_model(lm_spec)
  
 homes_model_wf
 
 homes_fit_model <- homes_model_wf %>% 
-  fit(data = homes.orig)
+  fit(data = )
 
 homes_fit_model %>% tidy()
 ```
