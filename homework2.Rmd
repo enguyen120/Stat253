@@ -263,9 +263,9 @@ life_model_wf <- workflow() %>%
 #>>>>>>> 09e5eebf78b0d44b0a83a167af1e12579c9ed2a9
   #add_model(lm_spec)
 
-#this is the chunk of code now working
-lasso_fit_rec <- life_rec_wf %>% 
-  fit(data = lifeExpectancyData) 
+#this is the chunk of code not working
+lasso_fit_rec <- life_model_wf %>% 
+  fit(data =lifeExpectancy) 
 
  
 ```
@@ -293,6 +293,8 @@ penalty_grid <- grid_regular(
   penalty(range = c(-5, 3)), #log10 transformed 10^-5 to 10^3
   levels = 50)
 
+
+# I tihnk we have to change something here.. or lots of somethings
 tune_res <- tune_grid( 
   lasso_wf_lifeex,
   resamples = lifeexpectancy_cv10,
