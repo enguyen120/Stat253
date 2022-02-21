@@ -62,6 +62,8 @@ library(readr)
 library(lubridate)
 library(astsa)
 library(splines)
+library(tidymodels)
+tidymodels_prefer()
 ```
 
 ```{r}
