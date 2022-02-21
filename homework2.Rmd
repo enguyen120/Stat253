@@ -141,13 +141,34 @@ health <- health %>%
   filter(`Country Code` !="CSS") %>%
   filter(`Country Code` !="ARB") %>%
   filter(`Country Code` !="AFW") %>%
-  filter(`Country Code` !="AFE")
+  filter(`Country Code` !="AFE") %>%
+  filter(`Country Code` !="AND") %>%
+  filter(`Country Code` !="BMU") %>%
+  filter(`Country Code` !="CYM") %>%
+  filter(`Country Code` !="DMA") %>%
+  filter(`Country Code` !="ERI") %>%
+  filter(`Country Code` !="GRL") %>%
+  filter(`Country Code` !="IMN") %>%
+  filter(`Country Code` !="LBY") %>%
+  filter(`Country Code` !="MCO") %>%
+  filter(`Country Code` !="PLW") %>%
+  filter(`Country Code` !="PRI") %>%
+  filter(`Country Code` !="PRK") %>%
+  filter(`Country Code` !="PSE") %>%
+  filter(`Country Code` !="SOM") %>%
+  filter(`Country Code` !="SSD") %>%
+  filter(`Country Code` !="SYR") %>%
+  filter(`Country Code` !="VEN") %>%
+  filter(`Country Code` !="XKX") %>%
+  filter(`Country Code` !="YEM")
 ```
 
+```{r}
+health %>%
+  count(`Country Code`)
+```
 
 # creation of cv folds
-
-```
 
 ```{r}
 # model spec
