@@ -266,7 +266,9 @@ e.
     - Are there any harms that may come from your analyses and/or how the data were collected?
     - What cautions do you want to keep in mind when communicating your work?
 
-
+Using an OLS to evaluate life expectancy in 1 year does make it easier to draw conclusions however, makes the data very simple and eliminates nuances. For example, 
+by only using data from 1 year, we can't draw broad conclusions about the data over time. The predictors that we've selected may actually be expletive 
+of what impacts life expectancy around the world. Another nuance that our analysis may miss is the importance of societal norms, gender roles, cultural context and geographic disparities that may make our estimation of the life expectancy inaccurate. Some of the cautions that we want to keep in mind are the year that we are working in and possible externalities that are impacting our results.  
 
 <br><br><br>
 
