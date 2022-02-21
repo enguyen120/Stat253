@@ -224,7 +224,10 @@ lifeExpectancy <-lifeExpectancy %>%
 ```{r}
 
 lifeExpectancy <- lifeExpectancy %>%
-  mutate(life_expec_round = round(as.numeric(life_expec)))
+  mutate(life_expec_round = as.numeric(life_expec)) %>%
+  mutate(GDP_per_capita = as.numeric(GDP_per_capita)) %>%
+  mutate(health_expend = as.numeric(health_expend)) %>%
+  mutate(mortality_rate = as.numeric(mortality_rate))
 ```
 
 ```{r}
