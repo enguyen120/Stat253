@@ -248,7 +248,30 @@ lm_spec <-
     linear_reg() %>% # this is the type of model we are fitting
     set_engine(engine = 'lm') %>% # you'll learn other engines to fit the model
     set_mode('regression') # we'll talk about other modes such as classification later
+homes_rec <- recipe(Price ~ ., data = homes.orig) %>% #start with formula; y ~ . means include all predictors in the data set
+    step_filter(Price >= 50000 & Price <= 500000) %>%
+    step_lincomb(all_numeric_predictors()) %>% # removes predictors that are linear combos of others
+    step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
+    step_unknown(all_nominal_predictors()) %>% # assign missing to "unknown" category
+    step_mutate(
+      Fuel.Type = factor(Fuel.Type, levels = 2:4, labels=c('gas','electric','oil')),
+      Heat.Type = factor(Heat.Type, levels = 2:4, labels=c('hot air','hot water/steam','electric')),
+      Sewer.Type = factor(Sewer.Type, levels = 1:3, labels = c('none','septic','public/commercial')),
+      AnyFireplace = if_else(Fireplaces > 0, 1,0)) %>%
+    step_cut(Rooms, breaks=c(0,4,8,10,20)) %>%
+    step_relevel(Rooms,ref_level = '(4,8]') %>%
+    step_log(Pct.College) %>%
+    step_other(all_nominal_predictors()) %>% 
+    step_dummy(all_nominal_predictors()) %>%
+    step_interact(terms = ~ Living.Area:AnyFireplace) %>%
+    step_center(Age) %>% #subtract mean
+    step_normalize(Lot.Size,Land.Value) # both center and scale
 
+homes_rec
+
+homes_rec %>% 
+  prep(training = homes.orig) %>% 
+  bake(new_data = NULL)
 homes_model_wf <- workflow() %>%
   add_recipe() %>% 
   add_model(lm_spec)
@@ -272,6 +295,56 @@ c.
 #  calculate/collect CV metrics
 mod_final %>% collect_metrics()
 ```
+
+
+```{r}
+lm_spec <-
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression')
+
+full_model <- fit(lm_spec,
+            fatSiri ~ .,  # The . means all predictors
+            data = bodyfat_train) 
+
+full_model %>% tidy() %>% arrange(desc(p.value))
+```
+
+```{r}
+# Code work for the first 4 stages: note alternate syntax of model formulas
+# Can use . to specify all variables other than outcome
+# Can use - to remove variables
+
+# Stage 1
+full_model %>% tidy() %>% arrange(desc(p.value))
+```
+
+```{r}
+fit(lm_spec,
+  fatSiri ~ . - hip,  
+  data = bodyfat_train) %>% 
+  tidy() %>%
+  arrange(desc(p.value))
+```
+
+```{r}
+fit(lm_spec,
+  fatSiri ~ . - hip - chest,  
+  data = bodyfat_train) %>% 
+  tidy() %>%
+  arrange(desc(p.value))
+```
+
+ 
+```{r}
+fit(lm_spec,
+  fatSiri ~ . - hip - chest - height,  
+  data = bodyfat_train) %>% 
+  tidy() %>%
+  arrange(desc(p.value))
+```
+
+
 
  
 d.
