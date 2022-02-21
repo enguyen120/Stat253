@@ -291,6 +291,56 @@ c.
 mod_final %>% collect_metrics()
 ```
 
+
+```{r}
+lm_spec <-
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression')
+
+full_model <- fit(lm_spec,
+            fatSiri ~ .,  # The . means all predictors
+            data = bodyfat_train) 
+
+full_model %>% tidy() %>% arrange(desc(p.value))
+```
+
+```{r}
+# Code work for the first 4 stages: note alternate syntax of model formulas
+# Can use . to specify all variables other than outcome
+# Can use - to remove variables
+
+# Stage 1
+full_model %>% tidy() %>% arrange(desc(p.value))
+```
+
+```{r}
+fit(lm_spec,
+  fatSiri ~ . - hip,  
+  data = bodyfat_train) %>% 
+  tidy() %>%
+  arrange(desc(p.value))
+```
+
+```{r}
+fit(lm_spec,
+  fatSiri ~ . - hip - chest,  
+  data = bodyfat_train) %>% 
+  tidy() %>%
+  arrange(desc(p.value))
+```
+
+ 
+```{r}
+fit(lm_spec,
+  fatSiri ~ . - hip - chest - height,  
+  data = bodyfat_train) %>% 
+  tidy() %>%
+  arrange(desc(p.value))
+```
+
+
+
  
 d.
 
