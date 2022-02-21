@@ -228,7 +228,32 @@ lm_lasso_spec <-
 
 ```{r}
 # recipes & workflows
+lm_spec <-
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression')
 
+lm_lasso_spec <- 
+  linear_reg() %>%
+  set_args(mixture = 1, penalty = 0) %>% ## mixture = 1 indicates Lasso, we'll talk about penalty later
+  set_engine(engine = 'glmnet') %>%
+  set_mode('regression') 
+
+lm_spec <- 
+    linear_reg() %>% # this is the type of model we are fitting
+    set_engine(engine = 'lm') %>% # you'll learn other engines to fit the model
+    set_mode('regression') # we'll talk about other modes such as classification later
+
+homes_model_wf <- workflow() %>%
+  add_recipe(homes_rec) %>% 
+  add_model(lm_spec)
+ 
+homes_model_wf
+
+homes_fit_model <- homes_model_wf %>% 
+  fit(data = homes.orig)
+
+homes_fit_model %>% tidy()
 ```
 
 ```{r}
