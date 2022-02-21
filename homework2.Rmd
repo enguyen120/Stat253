@@ -290,6 +290,42 @@ homes_fit_model %>% tidy()
 ```{r}
 # fit & tune models
 
+lm_lasso_spec_tune <- 
+  linear_reg() %>%
+  set_args(mixture = 1, penalty = tune()) %>% ## tune() indicates that we will try a variety of values
+  set_engine(engine = 'glmnet') %>%
+  set_mode('regression') 
+
+lasso_wf_Credit <- workflow() %>% 
+  add_recipe(Credit_rec) %>%
+  add_model(lm_lasso_spec_tune) 
+
+penalty_grid <- grid_regular(
+  penalty(range = c(-5, 3)), #log10 transformed 10^-5 to 10^3
+  levels = 50)
+
+tune_res <- tune_grid( # new function for tuning hyperparameters
+  lasso_wf_Credit, # workflow
+  resamples = Credit_cv10, # folds
+  metrics = metric_set(rmse),
+  grid = penalty_grid # penalty grid
+)
+
+autoplot(tune_res)
+
+collect_metrics(tune_res) %>%
+  filter(.metric == 'rmse') %>%
+  select(penalty, rmse = mean) 
+
+
+best_penalty <- select_best(tune_res, metric = 'rmse') # choose best penalty value
+
+Credit_final_wk <- finalize_workflow(lasso_wf_Credit, best_penalty) # incorporates penalty value to workflow
+
+Credit_final_fit <- fit(Credit_final_wk, data = Credit)
+
+tidy(Credit_final_fit)
+
 ```
 
 c.
