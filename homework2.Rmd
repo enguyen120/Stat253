@@ -224,7 +224,7 @@ lifeExpectancy <-lifeExpectancy %>%
 
 ```{r}
 set.seed(321)
-lifeexpectancy_cv10 <- vfold_cv(lifeExpectancy, v = 11)
+lifeexpectancy_cv7 <- vfold_cv(lifeExpectancy, v = 7)
 ```
 
 
@@ -297,7 +297,7 @@ penalty_grid <- grid_regular(
 # I tihnk we have to change something here.. or lots of somethings
 tune_res <- tune_grid( 
   lasso_wf_lifeex,
-  resamples = lifeexpectancy_cv10,
+  resamples = lifeexpectancy_cv7,
   metrics = metric_set(rmse),
   grid = penalty_grid
 )
