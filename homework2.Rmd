@@ -225,6 +225,11 @@ lifeExpectancy <-lifeExpectancy %>%
 ```{r}
 set.seed(321)
 lifeexpectancy_cv7 <- vfold_cv(lifeExpectancy, v = 7)
+life_train <- training(lifeexpectancy_cv7$splits[[1]]) # pulls training data for the 1st split (1st fold is testing set)
+#life_test <- testing(lifeexpectancy_cv7$splits[[1]]) # pulls testing data for the 1st split (1st fold is testing set)
+data_split <- initial_split(lifeExpectancy, prop = 0.75) #Create Train/Test set
+life_train <- training(data_split) # Fit model to this
+life_test  <- testing(data_split) # Don't use until evaluating final model
 ```
 
 
@@ -248,15 +253,36 @@ lm_lasso_spec <-
 ## I think we need a non-lasso recipe and wf here?
 
 
-life_rec<-recipe(`life_expec` ~ ., data = lifeExpectancy) %>% 
-    step_lincomb(all_numeric_predictors()) %>% 
-    step_nzv(all_numeric_predictors()) %>%
-    step_unknown(all_nominal_predictors()) 
+life_rec<-recipe(life_expec ~ ., data = life_train) %>%
+  step_nzv(all_numeric_predictors()) %>%
+  step_corr(all_numeric_predictors()) %>%
+  step_normalize(all_numeric_predictors()) 
+
+training_prep <- life_rec %>%
+  prep() %>%
+  juice()
 
 #<<<<<<< HEAD
-life_model_wf <- workflow() %>%
+lm_model_wf <- workflow() %>%
   add_recipe(life_rec) %>% 
   add_model(lm_spec)
+
+lm_fit_train <- lm_model_wf %>%
+  fit(data=life_train)
+
+train_prep %>%
+  select(life_expec) %>%
+  bind_cols( predict(lm_fit_train, life_train)) %>%
+  metrics(estimate = .pred, truth = life_expec)
+
+lm_fit_train %>%
+  tidy()
+
+lm_fit_cv <- fit_resamples(life_model_wf, resamples =lifeexpectancy_cv7, metrics = metric_set(rmse, mae, rsq))
+
+lm_fit_cv %>% collect_metrics()
+
+
 #=======
 #life_rec_wf <- workflow() %>%
   #add_recipe(life_rec) %>%
@@ -264,8 +290,8 @@ life_model_wf <- workflow() %>%
   #add_model(lm_spec)
 
 #this is the chunk of code not working
-lasso_fit_rec <- life_model_wf %>% 
-  fit(data =lifeExpectancy) 
+#lm_fit_rec <- life_model_wf %>% 
+  #fit(data =lifeExpectancy) 
 
  
 ```
