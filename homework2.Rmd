@@ -238,7 +238,7 @@ lm_lasso_spec <-
 # recipes & workflows
 
 lm_spec <- 
-    linear_reg() %>% # this is the type of model we are fitting
+    linear_reg() %>%
     set_engine(engine = 'lm') %>% # you'll learn other engines to fit the model
     set_mode('regression') # we'll talk about other modes such as classification later
 life_rec<- recipe(`Life expectancy at birth, total (years)` ~ ., data = lifeExpectancy) %>% #start with formula; y ~ . means include all predictors in the data set
@@ -246,18 +246,15 @@ life_rec<- recipe(`Life expectancy at birth, total (years)` ~ ., data = lifeExpe
     step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
     step_unknown(all_nominal_predictors()) # assign missing to "unknown" category
 
-life_rec %>% 
-  prep(training = lifeExpectancy) %>% 
-  bake(new_data = NULL)
-life_model_wf <- workflow() %>%
-  add_recipe() %>% 
+life_rec_wf <- workflow() %>%
+  add_recipe(life_rec) %>%
   add_model(lm_spec)
+
+
+lasso_fit_rec <- life_rec_wf %>% 
+  fit(data = lifeExpectancy) 
+
  
-
-life_fit_model <- life_model_wf %>% 
-  fit(data = lifeExpectancy)
-
-life_fit_model %>% tidy()
 ```
 
 ```{r}
