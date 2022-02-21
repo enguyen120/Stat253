@@ -385,7 +385,7 @@ e.
 2. **Summarize investigations**
     - Decide on an overall best model based on your investigations so far. To do this, make clear your analysis goals. Predictive accuracy? Interpretability? A combination of both?
 
-
+Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a country's average life expectancy rather than, for example, trying to predict a country's average life expectancy based on various socioeconomic factors. This is not only because the first approach is more useful but also because the latter is an ineffective way of trying to accomplish its goal.
 
 <br>
 
