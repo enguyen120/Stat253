@@ -212,6 +212,14 @@ lifeExpectancy <- lifeExpectancy %>%
   select(-`Multidimensional poverty headcount ratio, household (% of total households)`)
 ```
 
+```{r}
+lifeExpectancy <-lifeExpectancy %>%
+  rename("country"="Country Name", "country_code"="Country Code", "GDP_per_capita"="GDP per capita (constant 2015 US$)", "GDP"="GDP (constant 2015 US$)", "health_expend"="Current health expenditure (% of GDP)", "life_expec"="Life expectancy at birth, total (years)", "mortality_rate"="Mortality rate, infant (per 1,000 live births)", "domestic_gov_health_expend_% "="Domestic general government health expenditure (% of current health expenditure)","domestic_gov_health_expend_gdp"= "Domestic general government health expenditure (% of GDP)", "domestic_gov_health_expend_per_capita"="Domestic general government health expenditure per capita (current US$)", "ARI_treat"="ARI treatment (% of children under 5 taken to a health provider)", "women_repro"="Women making their own informed decisions regarding sexual relations, contraceptive use and reproductive health care  (% of women age 15-49)",  "women_decision_participation"="Women participating in the three decisions (own health care, major household purchases, and visiting family) (% of women age 15-49)", "poverty_5.50"="Poverty headcount ratio at $5.50 a day (2011 PPP) (% of population)", "poverty_3.20"="Poverty headcount ratio at $3.20 a day (2011 PPP) (% of population)", "poverty_1.90"="Poverty headcount ratio at $1.90 a day (2011 PPP) (% of population)", "prop_25%_plus"="Proportion of population spending more than 25% of household consumption or income on out-of-pocket health care expenditure (%)",  "gini_index"= "Gini index (World Bank estimate)", "social_labor_protec"="Adequacy of social protection and labor programs (% of total welfare of beneficiary households)", "social_safety_net"="Adequacy of social safety net programs (% of total welfare of beneficiary households)", "social_insurance_coverage"="Coverage of social insurance programs (% of population)",  "social_safety_coverage"="Coverage of social safety net programs (% of population)",  "multi_pov"="Multidimensional poverty headcount ratio (% of total population)", "multi_pov_child"="Multidimensional poverty headcount ratio, children (% of population ages 0-17)")
+
+```
+
+
+
 # creation of cv folds
 
 ```{r}
@@ -246,9 +254,6 @@ life_rec<- recipe(`Life expectancy at birth, total (years)` ~ ., data = lifeExpe
     step_nzv(all_numeric_predictors()) %>% # removes predictors with near zero variability
     step_unknown(all_nominal_predictors()) # assign missing to "unknown" category
 
-life_rec %>% 
-  prep(training = lifeExpectancy) %>% 
-  bake(new_data = NULL)
 life_model_wf <- workflow() %>%
   add_recipe() %>% 
   add_model(lm_spec)
@@ -316,7 +321,7 @@ lm_spec <-
     set_mode('regression')
 
 full_model <- fit(lm_spec,
-            fatSiri ~ .,  # The . means all predictors
+             ~ .,  # The . means all predictors
             data = bodyfat_train) 
 
 full_model %>% tidy() %>% arrange(desc(p.value))
