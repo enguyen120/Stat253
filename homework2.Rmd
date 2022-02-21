@@ -200,6 +200,10 @@ lifeExpectancyData <- health %>%
   select(-`2020 [YR2020]`)
 ```
 
+```{r}
+lifeExpectancy<- pivot_wider(lifeExpectancyData, names_from = "Series Name", values_from = "2018 [YR2018]")
+```
+
 # creation of cv folds
 
 ```{r}
