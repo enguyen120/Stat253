@@ -164,8 +164,38 @@ health <- health %>%
 ```
 
 ```{r}
-health %>%
-  count(`Country Code`)
+lifeExpectancyData <- health %>%
+  select(-`Series Code`) %>%
+  select(-`1990 [YR1990]`) %>%
+  select(-`1991 [YR1991]`) %>%
+  select(-`1992 [YR1992]`) %>%
+  select(-`1993 [YR1993]`) %>%
+  select(-`1994 [YR1994]`) %>%
+  select(-`1995 [YR1995]`) %>%
+  select(-`1996 [YR1996]`) %>%
+  select(-`1997 [YR1997]`) %>%
+  select(-`1998 [YR1998]`) %>%
+  select(-`1999 [YR1999]`) %>%
+  select(-`2000 [YR2000]`) %>%
+  select(-`2001 [YR2001]`) %>%
+  select(-`2002 [YR2002]`) %>%
+  select(-`2003 [YR2003]`) %>%
+  select(-`2004 [YR2004]`) %>%
+  select(-`2005 [YR2005]`) %>%
+  select(-`2006 [YR2006]`) %>%
+  select(-`2007 [YR2007]`) %>%
+  select(-`2008 [YR2008]`) %>%
+  select(-`2009 [YR2009]`) %>%
+  select(-`2010 [YR2010]`) %>%
+  select(-`2011 [YR2011]`) %>%
+  select(-`2012 [YR2012]`) %>%
+  select(-`2013 [YR2013]`) %>%
+  select(-`2014 [YR2014]`) %>%
+  select(-`2015 [YR2015]`) %>%
+  select(-`2016 [YR2016]`) %>%
+  select(-`2017 [YR2017]`) %>%
+  select(-`2019 [YR2019]`) %>%
+  select(-`2020 [YR2020]`)
 ```
 
 # creation of cv folds
