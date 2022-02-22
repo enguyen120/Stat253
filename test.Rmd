@@ -137,7 +137,7 @@ mod_ols <- fit_resamples(lm_model_wf,
       )  %>%
       collect_metrics(summarize = TRUE)
 
-mod_lasso <- fit_resamples(life_final_wf, 
+mod_lasso <- fit_resamples(final_wf, 
       resamples = health_cv13, 
       metrics = metric_set(rmse, rsq, mae)
       )  %>%
@@ -149,7 +149,7 @@ d.
 ```{r}
 # visual residuals
 #  Residuals vs. predictions
-ggplot(mod1_output, aes(x = .pred, y = resid)) +
+ggplot(mod_ols, aes(x = .pred, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") +
