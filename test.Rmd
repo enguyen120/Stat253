@@ -1,0 +1,81 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+library(astsa)
+library(splines)
+library(tidymodels)
+tidymodels_prefer()
+```
+
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
+```{r}
+set.seed(321)
+
+data_split <- initial_split(health1, prop = 0.75,strata = creatinine_phosphokinase) #Create Train/Test set
+health_train <- training(data_split) # Fit model to this
+health_test  <- testing(data_split)
+health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
+```
+
+```{r}
+# model spec
+lm_spec <- 
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression') 
+
+lm_lasso_spec <- 
+  linear_reg() %>%
+  set_args(mixture = 1, penalty = 0) %>%
+  set_engine(engine = 'glmnet') %>%
+  set_mode('regression') 
+```
+
+```{r}
+# recipes & workflows
+
+## I think we need a non-lasso recipe and wf here?
+
+
+life_rec<-recipe(creatinine_phosphokinase ~ ., data = health_train) %>%
+  step_nzv(all_numeric_predictors()) %>%
+  step_corr(all_numeric_predictors()) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+training_prep <- life_rec %>%
+  prep() %>%
+  juice()
+
+lm_model_wf <- workflow() %>%
+  add_recipe(life_rec) %>% 
+  add_model(lm_spec)
+
+lm_fit_train <- lm_model_wf %>%
+  fit(data=health_train)
+
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(lm_fit_train, health_train)) %>%
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)
+
+lm_fit_train %>%
+  tidy()
+
+lm_fit_cv <- fit_resamples(lm_model_wf, resamples =health_cv13, metrics = metric_set(rmse, mae, rsq))
+
+lm_fit_cv %>% 
+  collect_metrics()
+
+lm_fit_test <- last_fit(lm_model_wf,
+         split = data_split) 
+
+lm_fit_test %>%
+  collect_metrics() #Evaluation on Test Data
+
+```
