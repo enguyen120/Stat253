@@ -1,3 +1,17 @@
+1. **Initial investigation: ignoring nonlinearity (for now)**
+    a. Use ordinary least squares (OLS) by using the `lm` engine and LASSO (`glmnet` engine) to build  a series of initial regression models for your quantitative outcome as a function of the predictors of interest. (As part of data cleaning, exclude any variables that you don't want to consider as predictors.)
+        - You'll need two model specifications, `lm_spec` and `lm_lasso_spec` (you'll need to tune this one).
+    b. For each set of variables, you'll need a `recipe` with the `formula`, `data`, and pre-processing steps
+        - You may want to have steps in your recipe that remove variables with near zero variance (`step_nzv()`), remove variables that are highly correlated with other variables (`step_corr()`), normalize all quantitative predictors (`step_normalize(all_numeric_predictors())`) and add indicator variables for any categorical variables (`step_dummy(all_nominal_predictors())`).
+        - These models should not include any transformations to deal with nonlinearity. You'll explore this in the next investigation.
+    c. Estimate the test performance of the models using CV. Report and interpret (with units) the CV metric estimates along with a measure of uncertainty in the estimate (`std_error` is readily available when you used `collect_metrics(summarize=TRUE)`).
+        - Compare estimated test performance across the models. Which models(s) might you prefer?
+    d. Use residual plots to evaluate whether some quantitative predictors might be better modeled with nonlinear relationships.
+    e. Which variables do you think are the most important predictors of your quantitative outcome? Justify your answer. Do the methods you've applied reach consensus on which variables are most important? What insights are expected? Surprising?
+        - Note that if some (but not all) of the indicator terms for a categorical predictor are selected in the final models, the whole predictor should be treated as selected.
+
+<br>
+a & b. 
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -39,9 +53,7 @@ lm_lasso_spec <-
 ```{r}
 # recipes & workflows
 
-## I think we need a non-lasso recipe and wf here?
-
-
+##  non-lasso recipe + wf 
 life_rec<-recipe(creatinine_phosphokinase ~ ., data = health_train) %>%
   step_nzv(all_numeric_predictors()) %>%
   step_corr(all_numeric_predictors()) %>%
@@ -78,4 +90,78 @@ lm_fit_test <- last_fit(lm_model_wf,
 lm_fit_test %>%
   collect_metrics() #Evaluation on Test Data
 
+# lasso wf 
+lasso_wf_tune <- workflow() %>% 
+  add_recipe(life_rec) %>% # recipe defined above
+  add_model(lm_lasso_tune) 
+
+best_penalty <- select_best(tune_output, metric = 'mae') # choose penalty value based on lowest cv mae
+best_penalty
+
+best_se_penalty <- select_by_one_std_err(tune_output, metric = 'mae', desc(penalty)) # choose largest penalty value within 1 se of the lowest cv mae
+best_se_penalty
+
+final_wf <- finalize_workflow(lasso_wf_tune, best_penalty) # incorporates penalty value to workflow
+final_wf_se <- finalize_workflow(lasso_wf_tune, best_se_penalty) # incorporates penalty value to workflow
+
+final_fit <- fit(final_wf, data = health_train)
+final_fit_se <- fit(final_wf_se, data = health_train)
+
+tidy(final_fit)
+tidy(final_fit_se)
+
 ```
+c.
+
+```{r}
+mod_ols <- fit_resamples(lm_model_wf, 
+      resamples = lifeexpectancy_cv7, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+
+mod_lasso <- fit_resamples(life_final_wf, 
+      resamples = health_cv13, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+```
+
+d.
+
+```{r}
+# visual residuals
+#  Residuals vs. predictions
+ggplot(mod1_output, aes(x = .pred, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+# Residuals vs. predictors (x's)
+ 
+ggplot(mod1_output, aes(x = height, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+```
+e.
+
+<br>
+
+2. **Summarize investigations**
+    - Decide on an overall best model based on your investigations so far. To do this, make clear your analysis goals. Predictive accuracy? Interpretability? A combination of both?
+
+Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a country's average life expectancy rather than, for example, trying to predict a country's average life expectancy based on various socioeconomic factors. This is not only because the first approach is more useful but also because the latter is an ineffective way of trying to accomplish its goal.
+
+<br>
+
+3. **Societal impact**
+    - Are there any harms that may come from your analyses and/or how the data were collected?
+    - What cautions do you want to keep in mind when communicating your work?
+
+Using an OLS to evaluate life expectancy in 1 year does make it easier to draw conclusions however, makes the data very simple and eliminates nuances. For example, 
+by only using data from 1 year, we can't draw broad conclusions about the data over time. The predictors that we've selected may actually be expletive 
+of what impacts life expectancy around the world. Another nuance that our analysis may miss is the importance of societal norms, gender roles, cultural context and geographic disparities that may make our estimation of the life expectancy inaccurate. Some of the cautions that we want to keep in mind are the year that we are working in and possible externalities that are impacting our results.  
+
+<br><br><br>
