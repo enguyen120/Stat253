@@ -132,7 +132,7 @@ c.
 
 ```{r}
 mod_ols <- fit_resamples(lm_model_wf, 
-      resamples = lifeexpectancy_cv7, 
+      resamples = health_cv13, 
       metrics = metric_set(rmse, rsq, mae)
       )  %>%
       collect_metrics(summarize = TRUE)
