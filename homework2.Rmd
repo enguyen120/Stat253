@@ -314,10 +314,6 @@ lm_fit_test %>%
 #fit & tune models
 
 
-## fit the non-lasso model?
-
-
-
 lm_lasso_spec_tune <- 
   linear_reg() %>%
   set_args(mixture = 1, penalty = tune()) %>%
