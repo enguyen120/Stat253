@@ -43,9 +43,9 @@ lm_spec <-
     set_engine(engine = 'lm') %>% 
     set_mode('regression') 
 
-lm_lasso_spec <- 
+lm_lasso_spec_tune <- 
   linear_reg() %>%
-  set_args(mixture = 1, penalty = 0) %>%
+  set_args(mixture = 1, penalty = tune()) %>%
   set_engine(engine = 'glmnet') %>%
   set_mode('regression') 
 ```
@@ -89,7 +89,9 @@ lm_fit_test <- last_fit(lm_model_wf,
 
 lm_fit_test %>%
   collect_metrics() #Evaluation on Test Data
+```
 
+```{r}
 # lasso wf 
 lasso_wf_tune <- workflow() %>% 
   add_recipe(life_rec) %>% # recipe defined above
