@@ -95,6 +95,21 @@ lasso_wf_tune <- workflow() %>%
   add_recipe(life_rec) %>% # recipe defined above
   add_model(lm_lasso_spec_tune)
 
+penalty_grid <- grid_regular(
+  penalty(range = c(-5, 3)), #log10 transformed 10^-5 to 10^3
+  levels = 50)
+
+# tune lasso 
+penalty_grid <- grid_regular(
+  penalty(range = c(-3, 1)), #log10 transformed 
+  levels = 30)
+
+tune_output <- tune_grid( # new function for tuning parameters
+  lasso_wf_tune, # workflow
+  resamples = health_cv13, # cv folds
+  metrics = metric_set(rmse, mae),
+  grid = penalty_grid) 
+  
 best_penalty <- select_best(tune_output, metric = 'mae') # choose penalty value based on lowest cv mae
 best_penalty
 
