@@ -93,7 +93,7 @@ lm_fit_test %>%
 # lasso wf 
 lasso_wf_tune <- workflow() %>% 
   add_recipe(life_rec) %>% # recipe defined above
-  add_model(lm_lasso_tune) 
+  add_model(lm_lasso_spec_tune)
 
 best_penalty <- select_best(tune_output, metric = 'mae') # choose penalty value based on lowest cv mae
 best_penalty
