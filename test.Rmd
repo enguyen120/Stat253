@@ -150,11 +150,15 @@ mod_lasso <- fit_resamples(final_wf,
 ```
 
 d.
-
 ```{r}
 # visual residuals
 #  Residuals vs. predictions
-ggplot(mod_ols, aes(x = .pred, y = resid)) +
+mod_new <- mod_ols %>% 
+    predict(new_data = health_test) %>%
+    bind_cols(health_test) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+
+ggplot(mod_new, aes(x = .pred, y = resid)) +
     geom_point() +
     geom_smooth() +
     geom_hline(yintercept = 0, color = "red") +
@@ -168,6 +172,7 @@ ggplot(mod1_output, aes(x = height, y = resid)) +
     theme_classic()
 ```
 e.
+We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone expereinced heart failure. 
 
 <br>
 
