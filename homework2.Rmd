@@ -227,7 +227,23 @@ lifeExpectancy <- lifeExpectancy %>%
   mutate(life_expec_round = as.numeric(life_expec)) %>%
   mutate(GDP_per_capita = as.numeric(GDP_per_capita)) %>%
   mutate(health_expend = as.numeric(health_expend)) %>%
-  mutate(mortality_rate = as.numeric(mortality_rate))
+  mutate(`domestic_gov_health_expend_% `= as.numeric(`domestic_gov_health_expend_% `)) %>%
+  mutate(domestic_gov_health_expend_gdp= as.numeric(domestic_gov_health_expend_gdp)) %>%
+  mutate(domestic_gov_health_expend_per_capita = as.numeric(domestic_gov_health_expend_per_capita)) %>%
+  mutate(ARI_treat=as.numeric(ARI_treat)) %>%
+  mutate(women_repro=as.numeric(women_repro)) %>%
+  mutate(women_decision_participation=as.numeric(women_decision_participation)) %>%
+  mutate(poverty_5.50=as.numeric(poverty_5.50)) %>%
+  mutate(poverty_3.20=as.numeric(poverty_3.20)) %>%
+  mutate(poverty_1.90=as.numeric(poverty_1.90)) %>%
+  mutate(`prop_25%_plus`=as.numeric(`prop_25%_plus`)) %>%
+  mutate(gini_index=as.numeric(gini_index)) %>%
+  mutate(social_labor_protec=as.numeric(social_labor_protec)) %>%
+  mutate(social_safety_net=as.numeric(social_safety_net)) %>%
+  mutate(social_insurance_coverage=as.numeric(social_insurance_coverage)) %>%
+  mutate(social_safety_coverage=as.numeric(social_safety_coverage)) %>%
+  mutate(multi_pov=as.numeric(multi_pov)) %>%
+  mutate(multi_pov_child=as.numeric(multi_pov_child))
 ```
 
 ```{r}
