@@ -232,10 +232,10 @@ lifeExpectancy <- lifeExpectancy %>%
 
 ```{r}
 set.seed(321)
-lifeexpectancy_cv7 <- vfold_cv(lifeExpectancy, v = 7)
-data_split <- initial_split(lifeExpectancy, prop = 0.75) #Create Train/Test set
+data_split <- initial_split(lifeExpectancy, prop = 0.75,strata=life_expec) #Create Train/Test set
 life_train <- training(data_split) # Fit model to this
 life_test  <- testing(data_split) # Don't use until evaluating final model
+lifeexpectancy_cv7 <- vfold_cv(life_train, v = 7, strata=life_expec)
 ```
 
 
@@ -283,10 +283,15 @@ training_prep %>%
 lm_fit_train %>%
   tidy()
 
-lm_fit_cv <- fit_resamples(life_model_wf, resamples =lifeexpectancy_cv7, metrics = metric_set(rmse, mae, rsq))
+lm_fit_cv <- fit_resamples(lm_model_wf, resamples =lifeexpectancy_cv7, metrics = metric_set(rmse, mae, rsq))
 
 lm_fit_cv %>% collect_metrics()
 
+lm_fit_test <- last_fit(lm_model_wf,
+         split = data_split) 
+
+lm_fit_test %>%
+  collect_metrics() #Evaluation on Test Data
 ```
 
 ```{r}
