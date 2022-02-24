@@ -180,15 +180,29 @@ e.
 We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone expereinced heart failure. 
 
 <br>
+2. **Accounting for nonlinearity**
+    - Update your models to use natural splines for some of the quantitative predictors to account for non-linearity (these are GAMs).
+        - I recommend using OLS engine to fit these final models.
+        - You'll need to update the recipe to include `step_ns()` for each quantitative predictor that you want to allow to be non-linear.
+        - To determine number of knots (`deg_free`), I recommend fitting a smoothing spline and use `edf` to inform your choice.
 
-2. **Summarize investigations**
+    - Compare insights from variable importance analyses here and the corresponding results from the Investigation 1. Now after having accounted for nonlinearity, have the most relevant predictors changed?
+        - Do you gain any insights from the GAM output plots (easily obtained from fitting smoothing splines) for each predictor?
+        
+    - Compare model performance between your GAM models that the models that assuming linearity.
+        - How does test performance of the GAMs compare to other models you explored?
+
+    - Don't worry about KNN for now.
+<br>
+
+3. **Summarize investigations**
     - Decide on an overall best model based on your investigations so far. To do this, make clear your analysis goals. Predictive accuracy? Interpretability? A combination of both?
 
 Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a person's CPK (creatinine phosphokinase) levels rather than, for example, trying to predict a person's CPK levels based on other health indicators. High CPK levels usually indicate that there has been injury or stress to muscle tissue, the heart, or the brain. We want to see which health indicators have the strongest influence on damage to the body. We do not care to predict the CPK levels themselves as that does not carry much meaning for us.
 
 <br>
 
-3. **Societal impact**
+4. **Societal impact**
     - Are there any harms that may come from your analyses and/or how the data were collected?
     - What cautions do you want to keep in mind when communicating your work?
 
