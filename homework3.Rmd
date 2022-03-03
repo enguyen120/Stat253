@@ -32,7 +32,7 @@ You’ll need two model specifications, lm_spec and lm_lasso_spec (you’ll need
 ```{r}
 set.seed(321)
 
-data_split <- initial_split(health1, prop = 0.75,strata = creatinine_phosphokinase) #Create Train/Test set
+data_split <- initial_split(health1, prop = 0.75, strata = creatinine_phosphokinase) #Create Train/Test set
 health_train <- training(data_split) # Fit model to this
 health_test  <- testing(data_split)
 health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
@@ -152,6 +152,7 @@ tidy(final_fit_se)
 
 ```
 
+
 ```{r}
 mod_ols <- fit_resamples(lm_model_wf, 
       resamples = health_cv13, 
@@ -221,24 +222,45 @@ Accounting for nonlinearity
 Update your models to use natural splines for some of the quantitative predictors to account for non-linearity (these are GAMs).
 I recommend using OLS engine to fit these final models.
 You’ll need to update the recipe to include step_ns() for each quantitative predictor that you want to allow to be non-linear.
-```{r}
-set.seed(123)
-gam_spec <- 
-  gen_additive_mod() %>%
-  set_engine(engine = 'mgcv') %>%
-  set_mode('regression') 
-
-gam_mod <- fit(gam_spec,
-    Platelets ~ ., 
-    data = health_train
-)
-```
 To determine number of knots (deg_free), I recommend fitting a smoothing spline and use edf to inform your choice.
+```{r}
+#GAM recipe and wf 
+
+gam_rec <- recipe(creatinine_phosphokinase ~ high_blood_pressure + age + anaemia + platelets + sex + serum_sodium + ejection_fraction, data = health_train)
+
+
+gam_wf <- workflow() %>%
+    add_model(lm_spec) %>%
+    add_recipe(gam_rec) %>%
+  step_ns(high_blood_pressure, deg_free = 4) %>% 
+     step_ns(age, deg_free = 4) %>%
+     step_ns(anaemia, deg_free = 3) %>%
+     step_ns(platelets, deg_free = 6) %>%
+     step_ns(sex, deg_free = 4) %>%
+     step_ns(serum_sodium, deg_free = 4) %>%
+     step_ns(ejection_fraction, deg_free = 3)
+```
+
+```{r}
+mod_gam <- fit_resamples(
+    gam_wf,
+    resamples = health_cv13, # cv folds
+    metrics = metric_set(mae,rmse,rsq)                     
+  ) %>% collect_metrics(summarize = TRUE)
+```
+
 Compare insights from variable importance analyses here and the corresponding results from the Investigation 1. Now after having accounted for nonlinearity, have the most relevant predictors changed?
 Do you gain any insights from the GAM output plots (easily obtained from fitting smoothing splines) for each predictor?
+```{r}
+mod_gam %>% pluck('fit') %>% summary() ## for some reason this isn't working :( 
+
+fit_gam_model %>% pluck('fit') %>% mgcv::gam.check() 
+```
 Compare model performance between your GAM models that the models that assuming linearity.
 How does test performance of the GAMs compare to other models you explored?
 Don’t worry about KNN for now.
+
+
 
 
 Summarize investigations
