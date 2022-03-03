@@ -8,6 +8,21 @@ Collaboration: Form a team (2-3 members) for the project and this part can be do
 
 Data cleaning: If your dataset requires any cleaning (e.g., merging datasets, creation of new variables), first consult the R Resources page to see if your questions are answered there. If not, post on the #rcode-questions channel in our Slack workspace to ask for help. Please ask for help early and regularly to avoid stressful workloads.
 
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+library(astsa)
+library(splines)
+library(tidymodels)
+tidymodels_prefer()
+```
+
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
 
 
 Required Analyses:
@@ -15,20 +30,148 @@ Required Analyses:
 Initial investigation: ignoring nonlinearity (for now)
 Use ordinary least squares (OLS) by using the lm engine and LASSO (glmnet engine) to build a series of initial regression models for your quantitative outcome as a function of the predictors of interest. (As part of data cleaning, exclude any variables that you don’t want to consider as predictors.)
 You’ll need two model specifications, lm_spec and lm_lasso_spec (you’ll need to tune this one).
-For each set of variables, you’ll need a recipe with the formula, data, and pre-processing steps
-You may want to have steps in your recipe that remove variables with near zero variance (step_nzv()), remove variables that are highly correlated with other variables (step_corr()), normalize all quantitative predictors (step_normalize(all_numeric_predictors())) and add indicator variables for any categorical variables (step_dummy(all_nominal_predictors())).
+```{r}
+set.seed(321)
+
+data_split <- initial_split(health1, prop = 0.75,strata = creatinine_phosphokinase) #Create Train/Test set
+health_train <- training(data_split) # Fit model to this
+health_test  <- testing(data_split)
+health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
+```
+
+
+```{r}
+# recipes & workflows
+##  OLS 
+# model spec 
+lm_spec <- 
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression') 
+```
+For each set of variables, you’ll need a recipe with the formula, data, and pre-processing steps. You may want to have steps in your recipe that remove variables with near zero variance (step_nzv()), remove variables that are highly correlated with other variables (step_corr()), normalize all quantitative predictors (step_normalize(all_numeric_predictors())) and add indicator variables for any categorical variables (step_dummy(all_nominal_predictors())).
 These models should not include any transformations to deal with nonlinearity. You’ll explore this in the next investigation.
+```{r}
+## recipe and wf 
+life_rec<-recipe(creatinine_phosphokinase ~ ., data = health_train) %>%
+  step_nzv(all_numeric_predictors()) %>%
+  step_corr(all_numeric_predictors()) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+training_prep <- life_rec %>%
+  prep() %>%
+  juice()
+
+lm_model_wf <- workflow() %>%
+  add_recipe(life_rec) %>% 
+  add_model(lm_spec)
+
+lm_fit_train <- lm_model_wf %>%
+  fit(data=health_train)
+
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(lm_fit_train, health_train)) %>%
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)
+
+lm_fit_train %>%
+  tidy()
+
+lm_fit_cv <- fit_resamples(lm_model_wf, resamples =health_cv13, metrics = metric_set(rmse, mae, rsq))
+
+lm_fit_cv %>% 
+  collect_metrics()
+
+lm_fit_test <- last_fit(lm_model_wf,
+         split = data_split) 
+
+lm_fit_test %>%
+  collect_metrics() #Evaluation on Test Data
+```
+
 Estimate the test performance of the models using CV. Report and interpret (with units) the CV metric estimates along with a measure of uncertainty in the estimate (std_error is readily available when you used collect_metrics(summarize=TRUE)).
+```{r}
+mod_ols <- fit_resamples(lm_model_wf, 
+      resamples = health_cv13, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+
+mod_lasso <- fit_resamples(final_wf, 
+      resamples = health_cv13, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+```
+
+d.
+```{r}
+# visual residuals
+#  Residuals vs. predictions
+mod_new <- lm_fit_train %>% 
+    predict(new_data = health1) %>%
+    bind_cols(health1) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+mod_new2 <- final_fit_se %>% 
+    predict(new_data = health1) %>%
+    bind_cols(health1) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+```
 Compare estimated test performance across the models. Which models(s) might you prefer?
 Use residual plots to evaluate whether some quantitative predictors might be better modeled with nonlinear relationships.
+
+```{r}
+# visual residuals
+#  Residuals vs. predictions
+mod_new <- lm_fit_train %>% 
+    predict(new_data = health1) %>%
+    bind_cols(health1) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+mod_new2 <- final_fit_se %>% 
+    predict(new_data = health1) %>%
+    bind_cols(health1) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+```
+
+```{r}
+ggplot(mod_new, aes(x = .pred, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+ 
+ggplot(mod_new2, aes(x = .pred, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+```
+
 Which variables do you think are the most important predictors of your quantitative outcome? Justify your answer. Do the methods you’ve applied reach consensus on which variables are most important? What insights are expected? Surprising?
 Note that if some (but not all) of the indicator terms for a categorical predictor are selected in the final models, the whole predictor should be treated as selected.
 Note: after this process, you might have a set of models (one of which has predictors chosen using LASSO, one model with all the predictors of interest, and perhaps some models with subsets of predictors that were chosen based on the data context rather than an algorithmic process)
+
+
+e.
+We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone expereinced heart failure.
 
 Accounting for nonlinearity
 Update your models to use natural splines for some of the quantitative predictors to account for non-linearity (these are GAMs).
 I recommend using OLS engine to fit these final models.
 You’ll need to update the recipe to include step_ns() for each quantitative predictor that you want to allow to be non-linear.
+```{r}
+set.seed(123)
+gam_spec <- 
+  gen_additive_mod() %>%
+  set_engine(engine = 'mgcv') %>%
+  set_mode('regression') 
+
+gam_mod <- fit(gam_spec,
+    Platelets ~ ., 
+    data = health_train
+)
+```
 To determine number of knots (deg_free), I recommend fitting a smoothing spline and use edf to inform your choice.
 Compare insights from variable importance analyses here and the corresponding results from the Investigation 1. Now after having accounted for nonlinearity, have the most relevant predictors changed?
 Do you gain any insights from the GAM output plots (easily obtained from fitting smoothing splines) for each predictor?
@@ -40,7 +183,13 @@ Don’t worry about KNN for now.
 Summarize investigations
 Decide on an overall best model based on your investigations so far. To do this, make clear your analysis goals. Predictive accuracy? Interpretability? A combination of both?
 
+Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a person's CPK (creatinine phosphokinase) levels rather than, for example, trying to predict a person's CPK levels based on other health indicators. High CPK levels usually indicate that there has been injury or stress to muscle tissue, the heart, or the brain. We want to see which health indicators have the strongest influence on damage to the body. We do not care to predict the CPK levels themselves as that does not carry much meaning for us.
+
 
 Societal impact
 Are there any harms that may come from your analyses and/or how the data were collected?
 What cautions do you want to keep in mind when communicating your work?
+
+We are using various health indicators to predict another health indicator which can be convoluted. For example, we are using death event to predict CPK levels when the CPK levels were measured before the follow up period in which they may have died. We could get rid of death event as a predictor to fix this. 
+
+Harms can come from our analyses if we try to generalize the models too broadly. For example, since all of the patients were over 40, this information may not be useful when looking at a young person with heart failure. While this is rare, it is still important. Additionally, this sample is from patients from a hospital in Pakistan. We do not know what environmental factors may be at play here in this specific location. We also want to be careful not to generalize because the sample is pretty limited (only 299 patients). 
