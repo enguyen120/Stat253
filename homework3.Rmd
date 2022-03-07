@@ -22,6 +22,11 @@ tidymodels_prefer()
 health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
 ```
 
+```{r}
+health1 <- health1%>%
+  mutate(creatinine_phosphokinase = log(creatinine_phosphokinase)) %>%
+  mutate(platelets = log(platelets))
+```
 
 
 Required Analyses:
@@ -119,10 +124,6 @@ lm_lasso_spec_tune <-
 lasso_wf_tune <- workflow() %>% 
   add_recipe(life_rec) %>% # recipe defined above
   add_model(lm_lasso_spec_tune)
-
-penalty_grid <- grid_regular(
-  penalty(range = c(-5, 3)), #log10 transformed 10^-5 to 10^3
-  levels = 50)
 
 # tune lasso 
 penalty_grid <- grid_regular(
