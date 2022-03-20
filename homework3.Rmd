@@ -15,6 +15,7 @@ library(readr)
 library(lubridate)
 library(splines)
 library(tidymodels)
+library(gridExtra)
 tidymodels_prefer()
 ```
 
@@ -239,27 +240,94 @@ gam_spline_rec <- gam_rec %>%
 
 gam_spline_wf <- workflow() %>%
     add_model(lm_spec) %>%
-    add_recipe(spline_rec)
+    add_recipe(gam_spline_rec)
+```
+
+Compare insights from variable importance analyses here and the corresponding results from the Investigation 1. Now after having accounted for nonlinearity, have the most relevant predictors changed? Do you gain any insights from the GAM output plots (easily obtained from fitting smoothing splines) for each predictor?
+```{r}
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(gam_spline_fit_train, health_train) ) %>% 
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)  # Training metrics
+ 
+```
+```{r}
+# fit model 
+gam_spline_fit_train <- gam_spline_wf %>%
+  fit( data = health_train)
+
+gam_spline_fit_train %>%
+  tidy()
+```
+
+
+```{r}
+# collect metrics 
+mod_gam_spline <- gam_spline_wf %>%
+  fit_resamples(resamples = health_cv13,
+                metrics = metric_set(rmse, mae, rsq))
+
+mod_gam_spline %>%
+  collect_metrics()
 ```
 
 ```{r}
-
-mod_gam_spline <- fit_resamples(
-    spline_wf,
-    resamples = health_cv13, # cv folds
-    metrics = metric_set(mae,rmse,rsq)) %>% 
-    collect_metrics()
+# building spline model 
+spline_mod_output <- health_test %>%
+  bind_cols(predict(gam_spline_fit_train, new_data = health_test)) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+p1 <- ggplot(spline_mod_output, aes(x = high_blood_pressure, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+p2 <- ggplot(spline_mod_output, aes(x = age, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+p3 <- ggplot(spline_mod_output, aes(x = anaemia, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+p4 <- ggplot(spline_mod_output, aes(x = platelets, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+p5 <- ggplot(spline_mod_output, aes(x = sex, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+p6 <- ggplot(spline_mod_output, aes(x = serum_sodium, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+p7 <- ggplot(spline_mod_output, aes(x = ejection_fraction, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
 ```
 
-Compare insights from variable importance analyses here and the corresponding results from the Investigation 1. Now after having accounted for nonlinearity, have the most relevant predictors changed?
-Do you gain any insights from the GAM output plots (easily obtained from fitting smoothing splines) for each predictor?
+
 ```{r}
-mod_gam_spline %>% pluck('fit') %>% summary() ## for some reason this isn't working :( 
+#gam output plots (they're actually spline residual plots since the lm engine was used)
 
+grid.arrange(p1, p4, nrow = 1, ncol = 2)
+grid.arrange(p2, p5, nrow = 1, ncol = 2)
+grid.arrange(p3, p6, nrow = 1, ncol = 2)
+grid.arrange(p7, nrow = 1, ncol = 2)
 ```
+
+
 Compare model performance between your GAM models that the models that assuming linearity.
 How does test performance of the GAMs compare to other models you explored?
 Don’t worry about KNN for now.
+
 
 
 
