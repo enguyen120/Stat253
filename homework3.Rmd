@@ -96,19 +96,7 @@ lm_fit_test %>%
 ```
 
 Estimate the test performance of the models using CV. Report and interpret (with units) the CV metric estimates along with a measure of uncertainty in the estimate (std_error is readily available when you used collect_metrics(summarize=TRUE)).
-```{r}
-mod_ols <- fit_resamples(lm_model_wf, 
-      resamples = health_cv13, 
-      metrics = metric_set(rmse, rsq, mae)
-      )  %>%
-      collect_metrics(summarize = TRUE)
 
-mod_lasso <- fit_resamples(final_wf, 
-      resamples = health_cv13, 
-      metrics = metric_set(rmse, rsq, mae)
-      )  %>%
-      collect_metrics(summarize = TRUE)
-```
 
 ```{r}
 ##LASSO!
@@ -167,19 +155,6 @@ mod_lasso <- fit_resamples(final_wf,
       collect_metrics(summarize = TRUE)
 ```
 
-```{r}
-mod_ols <- fit_resamples(lm_model_wf, 
-      resamples = health_cv13, 
-      metrics = metric_set(rmse, rsq, mae)
-      )  %>%
-      collect_metrics(summarize = TRUE)
-
-mod_lasso <- fit_resamples(final_wf, 
-      resamples = health_cv13, 
-      metrics = metric_set(rmse, rsq, mae)
-      )  %>%
-      collect_metrics(summarize = TRUE)
-```
 
 d.
 ```{r}
