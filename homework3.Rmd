@@ -244,13 +244,7 @@ gam_spline_wf <- workflow() %>%
 ```
 
 Compare insights from variable importance analyses here and the corresponding results from the Investigation 1. Now after having accounted for nonlinearity, have the most relevant predictors changed? Do you gain any insights from the GAM output plots (easily obtained from fitting smoothing splines) for each predictor?
-```{r}
-training_prep %>%
-  select(creatinine_phosphokinase) %>%
-  bind_cols( predict(gam_spline_fit_train, health_train) ) %>% 
-  metrics(estimate = .pred, truth = creatinine_phosphokinase)  # Training metrics
- 
-```
+
 ```{r}
 # fit model 
 gam_spline_fit_train <- gam_spline_wf %>%
@@ -258,6 +252,15 @@ gam_spline_fit_train <- gam_spline_wf %>%
 
 gam_spline_fit_train %>%
   tidy()
+```
+
+
+```{r}
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(gam_spline_fit_train, health_train) ) %>% 
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)  # Training metrics
+ 
 ```
 
 
