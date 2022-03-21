@@ -95,8 +95,6 @@ lm_fit_test %>%
   collect_metrics() #Evaluation on Test Data
 ```
 
-Estimate the test performance of the models using CV. Report and interpret (with units) the CV metric estimates along with a measure of uncertainty in the estimate (std_error is readily available when you used collect_metrics(summarize=TRUE)).
-
 
 ```{r}
 ##LASSO!
@@ -154,6 +152,8 @@ mod_lasso <- fit_resamples(final_wf,
       )  %>%
       collect_metrics(summarize = TRUE)
 ```
+Estimate the test performance of the models using CV. Report and interpret (with units) the CV metric estimates along with a measure of uncertainty in the estimate (std_error is readily available when you used collect_metrics(summarize=TRUE)).
+
 
 
 d.
