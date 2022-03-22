@@ -38,10 +38,10 @@ You’ll need two model specifications, lm_spec and lm_lasso_spec (you’ll need
 ```{r}
 set.seed(321)
 
-data_split <- initial_split(health1, prop = 0.75, strata = platelets) #Create Train/Test set
+data_split <- initial_split(health1, prop = 0.75, strata = creatinine_phosphokinase) #Create Train/Test set
 health_train <- training(data_split) # Fit model to this
 health_test  <- testing(data_split)
-health_cv13 <- vfold_cv(health_train, v = 13, strata = platelets)
+health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
 ```
 
 
@@ -58,7 +58,7 @@ For each set of variables, you’ll need a recipe with the formula, data, and pr
 These models should not include any transformations to deal with nonlinearity. You’ll explore this in the next investigation.
 ```{r}
 ## recipe and wf 
-life_rec<-recipe(platelets ~ ., data = health_train) %>%
+life_rec<-recipe(creatinine_phosphokinase ~ ., data = health_train) %>%
   step_nzv(all_numeric_predictors()) %>%
   step_corr(all_numeric_predictors()) %>%
   step_normalize(all_numeric_predictors()) %>%
@@ -76,9 +76,9 @@ lm_fit_train <- lm_model_wf %>%
   fit(data=health_train)
 
 training_prep %>%
-  select(platelets) %>%
+  select(creatinine_phosphokinase) %>%
   bind_cols( predict(lm_fit_train, health_train)) %>%
-  metrics(estimate = .pred, truth = platelets)
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)
 
 lm_fit_train %>%
   tidy()
@@ -114,7 +114,7 @@ lasso_wf_tune <- workflow() %>%
 
 # tune lasso 
 penalty_grid <- grid_regular(
-  penalty(range = c(-3, -2)), #log10 transformed 
+  penalty(range = c(-3, 0)), #log10 transformed 
   levels = 100)
 
 tune_output <- tune_grid( # new function for tuning parameters
@@ -158,7 +158,7 @@ mod_lasso
 ```
 Estimate the test performance of the models using CV. Report and interpret (with units) the CV metric estimates along with a measure of uncertainty in the estimate (std_error is readily available when you used collect_metrics(summarize=TRUE)).
 
-
+The models show us that there is probably not a linear relationship between CPK and the predictors because the rsq is so low and the mae is so high. On average, we expect an error of 1 in our predictions, and considering that the highest CPK is 9 and the lowest is 3, we expect our predictions to be off by a lot. In additon, an rsq of 0.08 tells us that barely any of the CPK can be explained by our predictors(8%). At the very least, linear regression does not accurately represent the relationship between our predictors and CPK, and at worst, there isn't a relationship between our predictors and CPK. 
 
 d.
 ```{r}
@@ -167,11 +167,11 @@ d.
 mod_new <- lm_fit_train %>% 
     predict(new_data = health1) %>%
     bind_cols(health1) %>%
-    mutate(resid = platelets - .pred)
-mod_new2 <- final_fit_se %>% 
+    mutate(resid = creatinine_phosphokinase - .pred)
+mod_new2 <- final_fit %>% 
     predict(new_data = health1) %>%
     bind_cols(health1) %>%
-    mutate(resid = platelets - .pred)
+    mutate(resid = creatinine_phosphokinase - .pred)
 ```
 Compare estimated test performance across the models. Which models(s) might you prefer?
 Use residual plots to evaluate whether some quantitative predictors might be better modeled with nonlinear relationships.
@@ -182,11 +182,11 @@ Use residual plots to evaluate whether some quantitative predictors might be bet
 mod_new <- lm_fit_train %>% 
     predict(new_data = health1) %>%
     bind_cols(health1) %>%
-    mutate(resid = platelets - .pred)
+    mutate(resid = creatinine_phosphokinase - .pred)
 mod_new2 <- final_fit_se %>% 
     predict(new_data = health1) %>%
     bind_cols(health1) %>%
-    mutate(resid = platelets - .pred)
+    mutate(resid = creatinine_phosphokinase - .pred)
 ```
 
 ```{r}
