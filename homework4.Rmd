@@ -6,7 +6,9 @@ library(lubridate)
 library(splines)
 library(tidymodels)
 library(gridExtra)
+library(vip)
 tidymodels_prefer()
+conflicted::conflict_prefer("vi", "vip") 
 ```
 
 Start working on building a classification model to answer a research question on your data set. For HW4, only include your classification model work (leave your regression models work in another file).
@@ -32,3 +34,4 @@ Compare the different classification models tried in light of evaluation metrics
 Display evaluation metrics for different models in a clean, organized way. This display should include both the estimated metric as well as its standard deviation. (This won’t be available from OOB error estimation. If using OOB, don’t worry about reporting the SD.)
 Broadly summarize conclusions from looking at these evaluation metrics and their measures of uncertainty.
 Classification - Conclusions - Interpret evaluation metric(s) for the final model in context. Does the model show an acceptable amount of error? - If using OOB error estimation, display the test (OOB) confusion matrix, and use it to interpret the strengths and weaknesses of the final model. - Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.
+
