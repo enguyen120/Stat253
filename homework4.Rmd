@@ -12,6 +12,17 @@ conflicted::conflict_prefer("vi", "vip")
 
 ```
 
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
+```{r}
+health1 <- health1%>%
+  mutate(creatinine_phosphokinase = log(creatinine_phosphokinase)) %>%
+  mutate(platelets = log(platelets))
+```
+
+
 Start working on building a classification model to answer a research question on your data set. For HW4, only include your classification model work (leave your regression models work in another file).
 
 For this homework,
