@@ -20,6 +20,7 @@ health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
 health1 <- health1%>%
   mutate(creatinine_phosphokinase = log(creatinine_phosphokinase)) %>%
   mutate(platelets = log(platelets))
+  
 ```
 
 
@@ -51,10 +52,12 @@ Decision trees
 
 ```{r}
 
+health1$DEATH_EVENT <- as.factor(health1$DEATH_EVENT)
+
 #Model Specification
 rf_spec <- rand_forest() %>%
   set_engine(engine = 'ranger') %>% 
-  set_args(mtry = NULL, # size of random subset of variables; default is floor(sqrt(number of total predictors))
+  set_args( floor(sqrt(13)),
            trees = 1000, # Number of trees
            min_n = 2,
            probability = FALSE, # FALSE: get hard predictions
@@ -62,18 +65,18 @@ rf_spec <- rand_forest() %>%
   set_mode('classification') # change this for regression
 
 # Recipe
-data_rec <- recipe(class ~ ., data = health1)
+data_rec <- recipe(DEATH_EVENT ~ ., data = health1) 
 
 # Workflows
-data_wf_mtry2 <- workflow() %>%
-  add_model(rf_spec %>% set_args(mtry = 2)) %>%
+data_wf <- workflow() %>%
+  add_model(rf_spec ) %>%
   add_recipe(data_rec)
 
 ```
 
 ```{r}
 set.seed(123) # make sure to run this before each fit so that you have the same 1000 trees
-data_fit_mtry2 <- fit(data_wf_mtry2, data = land)
+data_fit <- fit(data_wf, data = health1)
 ```
 
 ```{r}
@@ -87,16 +90,16 @@ rf_OOB_output <- function(fit_model, model_label, truth){
 }
 
 #check out the function output
-rf_OOB_output(data_fit_mtry2,2, health1 %>% pull(class))
+rf_OOB_output(data_fit, 1, health1 %>% pull(DEATH_EVENT))
 ```
 
 ```{r}
 #Evaluate OOB Metrics
 data_rf_OOB_output <- bind_rows(
-    rf_OOB_output(data_fit_mtry2,2, land %>% pull(class)))
+    rf_OOB_output(data_fit,2, health1 %>% pull(DEATH_EVENT)))
 
 data_rf_OOB_output %>% 
     group_by(label) %>%
-    accuracy(truth = class, estimate = .pred_class)
+    accuracy(truth = DEATH_EVENT, estimate = .pred_class)
 ```
 
