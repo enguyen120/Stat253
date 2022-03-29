@@ -90,16 +90,16 @@ rf_OOB_output <- function(fit_model, model_label, truth){
 }
 
 #check out the function output
-rf_OOB_output(data_fit, 1, health1 %>% pull(DEATH_EVENT))
+rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT))
 ```
 
 ```{r}
 #Evaluate OOB Metrics
 data_rf_OOB_output <- bind_rows(
-    rf_OOB_output(data_fit,2, health1 %>% pull(DEATH_EVENT)))
+    rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT)))
 
 data_rf_OOB_output %>% 
     group_by(label) %>%
-    accuracy(truth = DEATH_EVENT, estimate = .pred_class)
+    accuracy(truth = class, estimate = .pred_class)
 ```
 
