@@ -1,0 +1,23 @@
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+library(splines)
+library(tidymodels)
+library(gridExtra)
+library(vip)
+tidymodels_prefer()
+conflicted::conflict_prefer("vi", "vip")
+```
+
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
+```{r}
+health1 <- health1%>%
+  mutate(creatinine_phosphokinase = log(creatinine_phosphokinase)) %>%
+  mutate(platelets = log(platelets))
+```
+
