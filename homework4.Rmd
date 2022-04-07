@@ -6,14 +6,32 @@ library(lubridate)
 library(splines)
 library(tidymodels)
 library(gridExtra)
+library(vip)
+library(probably)
 tidymodels_prefer()
+conflicted::conflict_prefer("vi", "vip") 
+
 ```
+
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
+```{r}
+health1 <- health1%>%
+  mutate(creatinine_phosphokinase = log(creatinine_phosphokinase)) %>%
+  mutate(platelets = log(platelets))
+  
+```
+
 
 Start working on building a classification model to answer a research question on your data set. For HW4, only include your classification model work (leave your regression models work in another file).
 
 For this homework,
 
 Specify the research question for a classification task.
+
+Our research question is: What predictors best predict death (DEATH_EVENT)?
 
 Try to implement at least 2 different classification methods to answer your research question.
 
@@ -39,3 +57,147 @@ Display evaluation metrics for different models in a clean, organized way. This 
 
 Broadly summarize conclusions from looking at these evaluation metrics and their measures of uncertainty.
 Classification - Conclusions - Interpret evaluation metric(s) for the final model in context. Does the model show an acceptable amount of error? - If using OOB error estimation, display the test (OOB) confusion matrix, and use it to interpret the strengths and weaknesses of the final model. - Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.
+
+Decision trees
+
+```{r}
+
+health1$DEATH_EVENT <- as.factor(health1$DEATH_EVENT)
+
+#Model Specification
+rf_spec <- rand_forest() %>%
+  set_engine(engine = 'ranger') %>% 
+  set_args( floor(sqrt(13)),
+           trees = 1000, 
+           min_n = 2,
+           probability = FALSE, # FALSE: get hard predictions
+           importance = 'impurity') %>%
+  set_mode('classification') # change this for regression
+
+# Recipe
+data_rec <- recipe(DEATH_EVENT ~ ., data = health1) 
+
+# Workflows
+data_wf <- workflow() %>%
+  add_model(rf_spec ) %>%
+  add_recipe(data_rec)
+
+```
+
+```{r}
+set.seed(123) 
+data_fit <- fit(data_wf, data = health1)
+```
+
+```{r}
+# Custom Function to get OOB predictions, true observed outcomes and add a user-provided model label
+rf_OOB_output <- function(fit_model, model_label, truth){
+    tibble(
+          .pred_class = fit_model %>% extract_fit_engine() %>% pluck('predictions'), #OOB predictions
+          class = truth,
+          label = model_label
+      )
+}
+
+
+rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT))
+```
+
+```{r}
+#Evaluate OOB Metrics
+data_rf_OOB_output <- bind_rows(
+    rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT)))
+
+data_rf_OOB_output %>% 
+    group_by(label) %>%
+    accuracy(truth = class, estimate = .pred_class)
+```
+
+Logistic Regression
+
+
+```{r}
+
+set.seed(123)
+
+health1 <- health1 %>%
+mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '0'))
+
+health_cv13 <- vfold_cv(health1, v = 13)
+
+logistic_spec <- logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+
+logistic_rec <- recipe(DEATH_EVENT ~ ., data = health1) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+log_wf <- workflow() %>%
+  add_recipe(logistic_rec)%>%
+  add_model(logistic_spec)
+
+log_fit <- fit(log_wf, data = health1)
+
+
+log_fit %>% tidy() %>%
+  mutate(OR.conf.low = exp(estimate- 1.96*std.error),OR.conf.high = exp(estimate + 1.96*std.error)) %>%
+  mutate(OR = exp(estimate))
+```
+
+Predictions on the Logistic Model
+
+```{r}
+predict(log_fit, new_data = health1, type = "prob")
+
+predict(log_fit, new_data = health1, type = "class")
+```
+
+
+```{r}
+logistic_output <-  health1 %>%
+  bind_cols(predict(log_fit, new_data = health1, type = 'prob')) 
+
+# do we want to change the threshold?
+logistic_output <- logistic_output %>%
+  mutate(.pred_class = make_two_class_pred(`.pred_0`, levels(DEATH_EVENT), threshold = .6)) 
+
+logistic_output %>%
+  ggplot(aes(x = DEATH_EVENT, y = .pred_0)) +
+  geom_boxplot() + 
+  geom_hline(yintercept = 0.5, color='red') +  # try changing threshold
+  labs(y = 'Predicted Probability of Outcome', x = 'Observed Outcome') +
+  theme_classic()
+```
+
+
+```{r}
+logistic_output %>%
+  conf_mat(truth = DEATH_EVENT, estimate = .pred_class)
+
+log_metrics <- metric_set(sens, yardstick::spec, accuracy) 
+
+logistic_output %>% 
+  log_metrics(estimate = .pred_class, truth = DEATH_EVENT, event_level = "second")
+```
+
+```{r}
+logistic_roc <- logistic_output %>% 
+    roc_curve(DEATH_EVENT, .pred_0, event_level = "second")
+
+autoplot(logistic_roc) + theme_classic()
+```
+
+
+
+
+```{r}
+log_cv_fit <- fit_resamples(
+    log_wf, 
+    resamples = health_cv13,
+    metrics = metric_set(sens, yardstick::spec, accuracy, roc_auc),
+    control = control_resamples(save_pred = TRUE, event_level = 'second'))  
+
+collect_metrics(log_cv_fit) 
+```
+
