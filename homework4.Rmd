@@ -7,6 +7,7 @@ library(splines)
 library(tidymodels)
 library(gridExtra)
 library(vip)
+library(probably)
 tidymodels_prefer()
 conflicted::conflict_prefer("vi", "vip") 
 
@@ -29,6 +30,8 @@ Start working on building a classification model to answer a research question o
 For this homework,
 
 Specify the research question for a classification task.
+
+Our research question is: What predictors best predict death (DEATH_EVENT)?
 
 Try to implement at least 2 different classification methods to answer your research question.
 
@@ -101,5 +104,93 @@ data_rf_OOB_output <- bind_rows(
 data_rf_OOB_output %>% 
     group_by(label) %>%
     accuracy(truth = class, estimate = .pred_class)
+```
+
+Logistic Regression
+
+
+```{r}
+
+set.seed(123)
+
+health1 <- health1 %>%
+mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '0'))
+
+health_cv13 <- vfold_cv(health1, v = 13)
+
+logistic_spec <- logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+
+logistic_rec <- recipe(DEATH_EVENT ~ ., data = health1) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+log_wf <- workflow() %>%
+  add_recipe(logistic_rec)%>%
+  add_model(logistic_spec)
+
+log_fit <- fit(log_wf, data = health1)
+
+
+log_fit %>% tidy() %>%
+  mutate(OR.conf.low = exp(estimate- 1.96*std.error),OR.conf.high = exp(estimate + 1.96*std.error)) %>%
+  mutate(OR = exp(estimate))
+```
+
+Predictions on the Logistic Model
+
+```{r}
+predict(log_fit, new_data = health1, type = "prob")
+
+predict(log_fit, new_data = health1, type = "class")
+```
+
+
+```{r}
+logistic_output <-  health1 %>%
+  bind_cols(predict(log_fit, new_data = health1, type = 'prob')) 
+
+# do we want to change the threshold?
+logistic_output <- logistic_output %>%
+  mutate(.pred_class = make_two_class_pred(`.pred_0`, levels(DEATH_EVENT), threshold = .6)) 
+
+logistic_output %>%
+  ggplot(aes(x = DEATH_EVENT, y = .pred_0)) +
+  geom_boxplot() + 
+  geom_hline(yintercept = 0.5, color='red') +  # try changing threshold
+  labs(y = 'Predicted Probability of Outcome', x = 'Observed Outcome') +
+  theme_classic()
+```
+
+
+```{r}
+logistic_output %>%
+  conf_mat(truth = DEATH_EVENT, estimate = .pred_class)
+
+log_metrics <- metric_set(sens, yardstick::spec, accuracy) 
+
+logistic_output %>% 
+  log_metrics(estimate = .pred_class, truth = DEATH_EVENT, event_level = "second")
+```
+
+```{r}
+logistic_roc <- logistic_output %>% 
+    roc_curve(DEATH_EVENT, .pred_0, event_level = "second")
+
+autoplot(logistic_roc) + theme_classic()
+```
+
+
+
+
+```{r}
+log_cv_fit <- fit_resamples(
+    log_wf, 
+    resamples = health_cv13,
+    metrics = metric_set(sens, yardstick::spec, accuracy, roc_auc),
+    control = control_resamples(save_pred = TRUE, event_level = 'second'))  
+
+collect_metrics(log_cv_fit) 
 ```
 
