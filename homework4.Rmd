@@ -121,7 +121,7 @@ Logistic Regression
 set.seed(123)
 
 health1 <- health1 %>%
-mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '0'))
+mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '1'))
 
 health_cv13 <- vfold_cv(health1, v = 13)
 
@@ -160,10 +160,10 @@ logistic_output <-  health1 %>%
 
 # do we want to change the threshold?
 logistic_output <- logistic_output %>%
-  mutate(.pred_class = make_two_class_pred(`.pred_0`, levels(DEATH_EVENT), threshold = .6)) 
+  mutate(.pred_class = make_two_class_pred(`.pred_1`, levels(DEATH_EVENT), threshold = .5)) 
 
 logistic_output %>%
-  ggplot(aes(x = DEATH_EVENT, y = .pred_0)) +
+  ggplot(aes(x = DEATH_EVENT, y = .pred_1)) +
   geom_boxplot() + 
   geom_hline(yintercept = 0.5, color='red') +  # try changing threshold
   labs(y = 'Predicted Probability of Outcome', x = 'Observed Outcome') +
@@ -183,7 +183,7 @@ logistic_output %>%
 
 ```{r}
 logistic_roc <- logistic_output %>% 
-    roc_curve(DEATH_EVENT, .pred_0, event_level = "second")
+    roc_curve(DEATH_EVENT, .pred_1, event_level = "second")
 
 autoplot(logistic_roc) + theme_classic()
 ```
