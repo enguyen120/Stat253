@@ -113,6 +113,12 @@ data_rf_OOB_output %>%
     accuracy(truth = class, estimate = .pred_class)
 ```
 
+```{r}
+rf_OOB_output(data_fit,12, health1 %>% pull(DEATH_EVENT)) %>%
+    conf_mat(truth = class, estimate= .pred_class)
+```
+
+
 Logistic Regression
 
 
