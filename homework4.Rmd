@@ -121,7 +121,7 @@ Logistic Regression
 set.seed(123)
 
 health1 <- health1 %>%
-mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '1'))
+mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '0'))
 
 health_cv13 <- vfold_cv(health1, v = 13)
 
