@@ -176,7 +176,7 @@ logistic_output <-  health1 %>%
 
 # do we want to change the threshold?
 logistic_output <- logistic_output %>%
-  mutate(.pred_class = make_two_class_pred(`.pred_1`, levels(DEATH_EVENT), threshold = .5)) 
+  mutate(.pred_class = make_two_class_pred(`.pred_0`, levels(DEATH_EVENT), threshold = .5)) 
 
 logistic_output %>%
   ggplot(aes(x = DEATH_EVENT, y = .pred_1)) +
