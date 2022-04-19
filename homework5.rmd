@@ -1,4 +1,4 @@
-### Ben Christensen, Amelia Ryan, Cecelia Kaufman, Emma Nguyen and Caedmon Koller-Dorsey. 
+### Ben Christensen, Amelia Ryan, Cecelia Kaufman, Emma Nguyen and Caedmon Kollmer-Dorsey. 
 
 # HW 5 work 
 ```{r}
