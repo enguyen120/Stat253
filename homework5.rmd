@@ -1,6 +1,6 @@
 ### Ben Christensen, Amelia Ryan, Cecelia Kaufman, Emma Nguyen and Caedmon Kollmer-Dorsey. 
 
-# HW 5 work 
+# HW 5 work (clustering)
 ```{r}
 library(dplyr)
 library(ggplot2)
@@ -10,8 +10,56 @@ tidymodels_prefer()
 ```
 
 ```{r}
-health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+health <- read.csv("heart_failure_clinical_records_dataset.csv")
 ```
 
-Explore 2 different classification models to answer your classification research question
-Explore clustering with your data
+```{r}
+# I chose hierarchical clustering for this part but idk if that's the best clustering method
+set.seed(253)
+health1 <- health %>%
+    slice_sample(n = 50)
+
+# Select the variables to be used in clustering
+health1_sub <- health %>%
+    select(creatinine_phosphokinase, DEATH_EVENT, platelets)
+
+# Summary statistics for the variables
+summary(health1_sub)
+
+# Compute a distance matrix on the scaled data
+dist_mat_scaled <- dist(scale(health1_sub))
+
+# The (scaled) distance matrix is the input to hclust()
+# The method argument indicates the linkage type
+hc_complete <- hclust(dist_mat_scaled, method = "complete")
+hc_single <- hclust(dist_mat_scaled, method = "single")
+hc_average <- hclust(dist_mat_scaled, method = "average")
+hc_centroid <- hclust(dist_mat_scaled, method = "centroid")
+
+# Plot dendrograms
+plot(hc_complete)
+plot(hc_single)
+plot(hc_average)
+plot(hc_centroid)
+```
+
+```{r}
+plot(hc_complete, labels = health$high_blood_pressure)
+plot(hc_complete, labels = health$sex)
+```
+
+```{r}
+health <- health %>%
+    mutate(
+        hclust_height3 = factor(cutree(hc_complete, h = 3)), # Cut at height (h) 3
+        hclust_num6 = factor(cutree(hc_complete, k = 6)) # Cut into 6 clusters (k)
+    )
+
+
+ggplot(health, aes(x=creatinine_phosphokinase, y= DEATH_EVENT)) +
+  geom_point(aes(color = hclust_height3)) 
+
+ggplot(health, aes(x= creatinine_phosphokinase, y= DEATH_EVENT)) +
+  geom_point(aes(color =   hclust_num6))
+
+```
