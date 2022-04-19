@@ -1,0 +1,17 @@
+### Ben Christensen, Amelia Ryan, Cecelia Kaufman, Emma Nguyen and Caedmon Koller-Dorsey. 
+
+# HW 5 work 
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidymodels)
+tidymodels_prefer()
+```
+
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
+Explore 2 different classification models to answer your classification research question
+Explore clustering with your data
