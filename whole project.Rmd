@@ -5,4 +5,390 @@ date: "4/21/2022"
 output: html_document
 ---
 
+# Final Project: Stat 253 - Statistical Machine Learning
+### Ben Christensen, Amelia Ryan, Cecelia Kaufman, Emma Nguyen and Caedmon Kollmer-Dorsey
+### May 9th, 2022 
+```{r}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+library(astsa)
+library(splines)
+library(tidymodels)
+library(gridExtra)
+library(vip)
+library(probably)
+tidymodels_prefer()
+conflicted::conflict_prefer("vi", "vip")
+```
+
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
+```{r}
+set.seed(321)
+
+data_split <- initial_split(health1, prop = 0.75,strata = creatinine_phosphokinase) #Create Train/Test set
+health_train <- training(data_split) # Fit model to this
+health_test  <- testing(data_split)
+health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
+```
+
+## Data context
+*Clearly describe what the cases in the final clean dataset represent.
+Broadly describe the variables used in your analyses.
+Who collected the data? When, why, and how? Answer as much of this as the available information allows.*
+
+
+## Research question
+*Research question(s)/motivation for the regression task; make clear the outcome variable and its units.
+Research question(s)/motivation for the classification task; make clear the outcome variable and its possible categories.
+Research question(s)/motivation for the unsupervised learning task*
+
+Our research question for classification is, What predictors best predict death (DEATH_EVENT)? 
+
+## Regression  
+### Methods
+*Describe the models used.
+Describe what you did to evaluate models.
+Indicate how you estimated quantitative evaluation metrics.
+Indicate what plots you used to evaluate models.
+Describe the goals / purpose of the methods used in the overall context of your research investigations.*
+
+```{r}
+# model spec 
+lm_spec <- 
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression') 
+```
+
+```{r}
+## recipe and wf 
+life_rec<-recipe(creatinine_phosphokinase ~ ., data = health_train) %>%
+  step_nzv(all_numeric_predictors()) %>%
+  step_corr(all_numeric_predictors()) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+training_prep <- life_rec %>%
+  prep() %>%
+  juice()
+
+lm_model_wf <- workflow() %>%
+  add_recipe(life_rec) %>% 
+  add_model(lm_spec)
+
+lm_fit_train <- lm_model_wf %>%
+  fit(data=health_train)
+
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(lm_fit_train, health_train)) %>%
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)
+
+lm_fit_train %>%
+  tidy()
+
+lm_fit_cv <- fit_resamples(lm_model_wf, resamples =health_cv13, metrics = metric_set(rmse, mae, rsq))
+
+lm_fit_cv %>% 
+  collect_metrics()
+
+lm_fit_test <- last_fit(lm_model_wf,
+         split = data_split) 
+
+lm_fit_test %>%
+  collect_metrics() #Evaluation on Test Data
+```
+
+```{r}
+mod_ols <- fit_resamples(lm_model_wf, 
+      resamples = health_cv13, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+```
+
+
+### Results 
+*Summarize your final model and justify your model choice (see below for ways to justify your choice).
+Compare the different models in light of evaluation metrics, plots, variable importance, and data context.
+Display evaluation metrics for different models in a clean, organized way. This display should include both the estimated CV metric as well as its standard deviation.
+Broadly summarize conclusions from looking at these CV evaluation metrics and their measures of uncertainty.
+Summarize conclusions from residual plots from initial models (don’t have to display them though).
+Show and interpret some representative examples of residual plots for your final model. Does the model show acceptable results in terms of any systematic biases?*
+
+```{r}
+mod_new <- lm_fit_train %>% 
+    predict(new_data = health1) %>%
+    bind_cols(health1) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+
+ggplot(mod_new, aes(x = .pred, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+```
+
+```{r}
+mod_ols <- fit_resamples(lm_model_wf, 
+      resamples = health_cv13, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+```
+
+Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a person's CPK (creatinine phosphokinase) levels rather than, for example, trying to predict a person's CPK levels based on other health indicators. High CPK levels usually indicate that there has been injury or stress to muscle tissue, the heart, or the brain. We want to see which health indicators have the strongest influence on damage to the body. We do not care to predict the CPK levels themselves as that does not carry much meaning for us.
+### Conclusions
+*Interpret you final model (show plots of estimated non-linear functions, or slope coefficients) for important predictors, and provide some general interpretations of what you learn from these
+Interpret evaluation metric(s) for the final model in context with units. Does the model show an acceptable amount of error?
+Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
+```{r}
+gam_rec <- recipe(creatinine_phosphokinase ~ high_blood_pressure + age + anaemia + platelets + sex + serum_sodium + ejection_fraction, data = health_train)
+
+gam_spline_rec <- gam_rec %>%
+   step_ns(high_blood_pressure, deg_free = 1) %>% 
+     step_ns(age, deg_free = 1) %>%
+     step_ns(anaemia, deg_free = 1) %>%
+     step_ns(platelets, deg_free = 1) %>%
+     step_ns(sex, deg_free = 1) %>%
+     step_ns(serum_sodium, deg_free = 1) %>%
+     step_ns(ejection_fraction, deg_free = 1)
+
+gam_spline_wf <- workflow() %>%
+    add_model(lm_spec) %>%
+    add_recipe(gam_spline_rec)
+```
+
+```{r}
+# fit model 
+gam_spline_fit_train <- gam_spline_wf %>%
+  fit( data = health_train)
+
+gam_spline_fit_train %>%
+  tidy()
+```
+
+
+```{r}
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(gam_spline_fit_train, health_train) ) %>% 
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)  # Training metrics
+ 
+```
+
+
+```{r}
+# collect metrics 
+mod_gam_spline <- gam_spline_wf %>%
+  fit_resamples(resamples = health_cv13,
+                metrics = metric_set(rmse, mae, rsq))
+
+mod_gam_spline %>%
+  collect_metrics()
+```
+The models show us that there is probably not a linear relationship between CPK and the predictors because the rsq is so low and the mae is so high. On average, we expect an error of 1 in our predictions, and considering that the highest CPK is 9 and the lowest is 3, we expect our predictions to be off by a lot. In additon, an rsq of 0.08 tells us that barely any of the CPK can be explained by our predictors(8%). At the very least, linear regression does not accurately represent the relationship between our predictors and CPK, and at worst, there isn't a relationship between our predictors and CPK.
+
+We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone expereinced heart failure. 
+
+Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a person's CPK (creatinine phosphokinase) levels rather than, for example, trying to predict a person's CPK levels based on other health indicators. High CPK levels usually indicate that there has been injury or stress to muscle tissue, the heart, or the brain. We want to see which health indicators have the strongest influence on damage to the body. We do not care to predict the CPK levels themselves as that does not carry much meaning for us.
+## Classification  
+### Methods
+The two different methods that we used to answer our classification research question were logistic regression and decision trees.
+
+We estimated all of our quantitative evaluation metrics using cross validation and the out of bag error.
+
+To evaluate the models, we used cross validation and the out of bag error. For cross validation, we randomly  split a data set into two groups that are called folds, given by k. For each fold, the data is divided randomly into a training set  and test set, k-1 folds. The training data is used to train the model to make predictions about the data and the test set is used to see how well the model works on data it has not seen before, allowing us to test its accuracy. The resulting metrics from cross validation are averaged over the number of folds to get a result that encapsulates all the folds and tests that were done. For the out of bag error, the algorithm uses bootstrapping which is where the algorithm randomly resamples the dataset to generate the model. For the out of bag error, the algorithm randomly leaves out some cases out of the resampling and uses these left out cases to test the model and determine the accuracy of the decision trees.
+
+Our data set includes data on different health factors that influence the probability of a person dying from heart failure. It makes logical sense that the classification models that we are creating for this section of the project will generate the most valuable results from the data set and will be the most important in regards to the overall context of our research investigations.
+
+**Decision trees**
+
+```{r}
+
+health1$DEATH_EVENT <- as.factor(health1$DEATH_EVENT)
+
+#Model Specification
+rf_spec <- rand_forest() %>%
+  set_engine(engine = 'ranger') %>% 
+  set_args( floor(sqrt(13)),
+           trees = 1000, 
+           min_n = 2,
+           probability = FALSE, # FALSE: get hard predictions
+           importance = 'impurity') %>%
+  set_mode('classification') # change this for regression
+
+# Recipe
+data_rec <- recipe(DEATH_EVENT ~ ., data = health1) 
+
+# Workflows
+data_wf <- workflow() %>%
+  add_model(rf_spec ) %>%
+  add_recipe(data_rec)
+
+data_fit <- fit(data_wf, data = health1)
+```
+
+
+**Logistic Regression**
+
+```{r}
+
+health1 <- health1 %>%
+mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '0'))
+
+health_cv13 <- vfold_cv(health1, v = 13)
+
+logistic_spec <- logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+
+logistic_rec <- recipe(DEATH_EVENT ~ ., data = health1) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+log_wf <- workflow() %>%
+  add_recipe(logistic_rec)%>%
+  add_model(logistic_spec)
+
+log_fit <- fit(log_wf, data = health1)
+
+
+log_fit %>% tidy() %>%
+  mutate(OR.conf.low = exp(estimate- 1.96*std.error),OR.conf.high = exp(estimate + 1.96*std.error)) %>%
+  mutate(OR = exp(estimate))
+```
+
+Predictions on the Logistic Model
+
+```{r}
+predict(log_fit, new_data = health1, type = "prob")
+
+predict(log_fit, new_data = health1, type = "class")
+```
+
+```{r}
+logistic_output <-  health1 %>%
+  bind_cols(predict(log_fit, new_data = health1, type = 'prob')) 
+
+# do we want to change the threshold?
+logistic_output <- logistic_output %>%
+  mutate(.pred_class = make_two_class_pred(`.pred_0`, levels(DEATH_EVENT), threshold = .5)) 
+
+logistic_output %>%
+  ggplot(aes(x = DEATH_EVENT, y = .pred_1)) +
+  geom_boxplot() + 
+  geom_hline(yintercept = 0.5, color='red') +  # try changing threshold
+  labs(y = 'Predicted Probability of Outcome', x = 'Observed Outcome') +
+  theme_classic()
+```
+
+### Results
+*Summarize your final model and justify your model choice (see below for ways to justify your choice).
+Compare the different classification models tried in light of evaluation metrics, variable importance, and data context.
+Display evaluation metrics for different models in a clean, organized way. This display should include both the estimated metric as well as its standard deviation. (This won’t be available from OOB error estimation. If using OOB, don’t worry about reporting the SD.)
+Broadly summarize conclusions from looking at these evaluation metrics and their measures of uncertainty.*
+
+**OOB**
+```{r}
+# Custom Function to get OOB predictions, true observed outcomes and add a user-provided model label
+rf_OOB_output <- function(fit_model, model_label, truth){
+    tibble(
+          .pred_class = fit_model %>% extract_fit_engine() %>% pluck('predictions'), #OOB predictions
+          class = truth,
+          label = model_label
+      )
+}
+
+
+rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT))
+```
+
+```{r}
+#Evaluate OOB Metrics
+data_rf_OOB_output <- bind_rows(
+    rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT)))
+
+data_rf_OOB_output %>% 
+    group_by(label) %>%
+    accuracy(truth = class, estimate = .pred_class)
+```
+
+```{r}
+rf_OOB_output(data_fit,12, health1 %>% pull(DEATH_EVENT)) %>%
+    conf_mat(truth = class, estimate= .pred_class)
+```
+
+**logistic regression cross validation**
+```{r}
+logistic_output %>%
+  conf_mat(truth = DEATH_EVENT, estimate = .pred_class)
+
+log_metrics <- metric_set(sens, yardstick::spec, accuracy) 
+
+logistic_output %>% 
+  log_metrics(estimate = .pred_class, truth = DEATH_EVENT, event_level = "second")
+```
+
+```{r}
+logistic_roc <- logistic_output %>% 
+    roc_curve(DEATH_EVENT, .pred_1, event_level = "second")
+
+autoplot(logistic_roc) + theme_classic()
+```
+
+```{r}
+log_cv_fit <- fit_resamples(
+    log_wf, 
+    resamples = health_cv13,
+    metrics = metric_set(sens, yardstick::spec, accuracy, roc_auc),
+    control = control_resamples(save_pred = TRUE, event_level = 'second'))  
+
+collect_metrics(log_cv_fit) 
+```
+### Conclusions
+*Interpret evaluation metric(s) for the final model in context. Does the model show an acceptable amount of error?
+If using OOB error estimation, display the test (OOB) confusion matrix, and use it to interpret the strengths and weaknesses of the final model.
+Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
+
+In our final model we predicted the probability of someone dying using logistic regression. We chose decision trees over logistic regression because it has a higher likelihood it will correctly predict death at an accuracy rate of 85.61%; compared to our logistic regression model which has an accuracy of 82.27% on predicting death event. Since the sensitivity for the logistic regression is low, it is worse at predicting whether or not they will die, which is another reason why we've chosen the decision trees. Although the ROC AUC curve for logistic regression is 88%, it is still not the same as the actual prediction of the death event, which is lower than logistic regression.For the decision trees, the predictors that had the biggest impact on the final result of predicting death event are ejection fraction, cpk, age and serum creatinine. 
+
+
+
+## Unsupervised learning clustering
+*Choose one method for clustering
+Justify the choice of features included in a distance measure based on the research goals
+Justify the choice of  k  and summarize resulting clusters
+Interpret the clusters qualitatively
+Evaluate clusters quantitatively (kmeans: within cluster sum of squares, pam: silhouette, hclust: height of cut on dendrogram)
+If appropriate, show visuals to justify your choices.
+Summarize what information you gain from the clustering in context (tell a story)*
+
+```{r}
+health1 <- health1 %>%
+    slice_sample(n = 50)
+
+health1_sub <- health1 %>%
+    select(creatinine_phosphokinase, DEATH_EVENT, platelets)
+
+summary(health1_sub)
+
+dist_mat_scaled <- dist(scale(health1_sub))
+
+hc_single <- hclust(dist_mat_scaled, method = "single")
+
+plot(hc_single)
+```
+
+```{r}
+plot(hc_single, labels = health1$high_blood_pressure)
+plot(hc_single, labels = health1$sex)
+```
+```
 
