@@ -19,28 +19,16 @@ set.seed(253)
 health1 <- health %>%
     slice_sample(n = 50)
 
-# Select the variables to be used in clustering
-health1_sub <- health %>%
+health1_sub <- health1 %>%
     select(creatinine_phosphokinase, DEATH_EVENT, platelets)
 
-# Summary statistics for the variables
 summary(health1_sub)
 
-# Compute a distance matrix on the scaled data
 dist_mat_scaled <- dist(scale(health1_sub))
 
-# The (scaled) distance matrix is the input to hclust()
-# The method argument indicates the linkage type
-hc_complete <- hclust(dist_mat_scaled, method = "complete")
 hc_single <- hclust(dist_mat_scaled, method = "single")
-hc_average <- hclust(dist_mat_scaled, method = "average")
-hc_centroid <- hclust(dist_mat_scaled, method = "centroid")
 
-# Plot dendrograms
-plot(hc_complete)
 plot(hc_single)
-plot(hc_average)
-plot(hc_centroid)
 ```
 
 ```{r}
