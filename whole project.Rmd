@@ -6,7 +6,7 @@ output: html_document
 ---
 
 # Final Project: Stat 253 - Statistical Machine Learning
-### Ben Christensen, Amelia Ryan, Cecelia Kaufman, Emma Nguyen and Caedmon Kollmer-Dorsey
+### Ben Christensen, Amelia Ryan, Cecelia Kaufmann, Emma Nguyen and Caedmon Kollmer-Dorsey
 ### May 9th, 2022 
 ```{r}
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE)
@@ -39,14 +39,27 @@ health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
 
 ## Data context
 *Clearly describe what the cases in the final clean dataset represent.
+
+In our clean data set, a case is a person and specific variables in their medical records linked to a cardiovascular disease. These variables can be used to model and predict an instance of heart failure or (as the variable shows) a death event. 
+
 Broadly describe the variables used in your analyses.
+
+The variables in this dataset are ones that can be used to predict heart failure, a common and deadly cardiovascular disease. Variables such as sex of participant and certain variables like smoking, diabetes, high blood pressure, anemia, and death event are all categorical (and binary) variables in this data set. There are also variables measuring measuring creatinine and ejection fraction (which is the amount of blood leaving the heart during each contraction). There are variables measuring platelet count, creatinine, and sodium serum in the blood. 
+
 Who collected the data? When, why, and how? Answer as much of this as the available information allows.*
+
+The data contains the medical records of 299 patients with criteria that would make them at risk for heart failure. The data set was collected at the Faisalabad Institute of Cardiology and at the Allied Hospital in Punjab, Pakistan between  April and December 2015. 
+
 
 
 ## Research question
 *Research question(s)/motivation for the regression task; make clear the outcome variable and its units.
 Research question(s)/motivation for the classification task; make clear the outcome variable and its possible categories.
+
+
+
 Research question(s)/motivation for the unsupervised learning task*
+
 
 Our research question for classification is, What predictors best predict death (DEATH_EVENT)? 
 
@@ -144,6 +157,7 @@ mod_ols <- fit_resamples(lm_model_wf,
 ```
 
 Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a person's CPK (creatinine phosphokinase) levels rather than, for example, trying to predict a person's CPK levels based on other health indicators. High CPK levels usually indicate that there has been injury or stress to muscle tissue, the heart, or the brain. We want to see which health indicators have the strongest influence on damage to the body. We do not care to predict the CPK levels themselves as that does not carry much meaning for us.
+
 ### Conclusions
 *Interpret you final model (show plots of estimated non-linear functions, or slope coefficients) for important predictors, and provide some general interpretations of what you learn from these
 Interpret evaluation metric(s) for the final model in context with units. Does the model show an acceptable amount of error?
@@ -292,7 +306,11 @@ logistic_output %>%
 
 ### Results
 *Summarize your final model and justify your model choice (see below for ways to justify your choice).
+
+
 Compare the different classification models tried in light of evaluation metrics, variable importance, and data context.
+
+
 Display evaluation metrics for different models in a clean, organized way. This display should include both the estimated metric as well as its standard deviation. (This won’t be available from OOB error estimation. If using OOB, don’t worry about reporting the SD.)
 Broadly summarize conclusions from looking at these evaluation metrics and their measures of uncertainty.*
 
