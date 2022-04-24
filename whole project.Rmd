@@ -193,11 +193,12 @@ mod_gam_spline <- gam_spline_wf %>%
 mod_gam_spline %>%
   collect_metrics()
 ```
-The models show us that there is probably not a linear relationship between CPK and the predictors because the rsq is so low and the mae is so high. On average, we expect an error of 1 in our predictions, and considering that the highest CPK is 9 and the lowest is 3, we expect our predictions to be off by a lot. In additon, an rsq of 0.08 tells us that barely any of the CPK can be explained by our predictors(8%). At the very least, linear regression does not accurately represent the relationship between our predictors and CPK, and at worst, there isn't a relationship between our predictors and CPK.
+The models show us that there is probably not a linear relationship between CPK and the predictors because the rsq is so low and the mae is so high. On average, we expect an error of 1 in our predictions, and considering that the highest CPK is 9 and the lowest is 3, we expect our predictions to be off by a lot. In additon, an rsq of 0.08 tells us that barely any of the CPK can be explained by our predictors(8%). At the very least, linear regression does not accurately represent the relationship between our predictors and CPK, and at worst, there isn't a relationship between our predictors and CPK.When we fit a nonlinear model, we found that it was not much better than using OLS. 
 
 We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone expereinced heart failure. 
 
 Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a person's CPK (creatinine phosphokinase) levels rather than, for example, trying to predict a person's CPK levels based on other health indicators. High CPK levels usually indicate that there has been injury or stress to muscle tissue, the heart, or the brain. We want to see which health indicators have the strongest influence on damage to the body. We do not care to predict the CPK levels themselves as that does not carry much meaning for us.
+
 ## Classification  
 ### Methods
 The two different methods that we used to answer our classification research question were logistic regression and decision trees.
@@ -359,18 +360,11 @@ Summarization should show evidence of acknowledging the data context in thinking
 
 In our final model we predicted the probability of someone dying using logistic regression. We chose decision trees over logistic regression because it has a higher likelihood it will correctly predict death at an accuracy rate of 85.61%; compared to our logistic regression model which has an accuracy of 82.27% on predicting death event. Since the sensitivity for the logistic regression is low, it is worse at predicting whether or not they will die, which is another reason why we've chosen the decision trees. Although the ROC AUC curve for logistic regression is 88%, it is still not the same as the actual prediction of the death event, which is lower than logistic regression.For the decision trees, the predictors that had the biggest impact on the final result of predicting death event are ejection fraction, cpk, age and serum creatinine. 
 
+## Unsupervised learning clustering.
 
-
-## Unsupervised learning clustering
-*Choose one method for clustering
-Justify the choice of features included in a distance measure based on the research goals
-Justify the choice of  k  and summarize resulting clusters
-Interpret the clusters qualitatively
-Evaluate clusters quantitatively (kmeans: within cluster sum of squares, pam: silhouette, hclust: height of cut on dendrogram)
-If appropriate, show visuals to justify your choices.
-Summarize what information you gain from the clustering in context (tell a story)*
-
+In our consideration of what variables impacted the chances of a person dying from heart failure, we decided to use un supervised learning to see what  the most common indicator of heart failure caused a death event. The method that we chose for clustering was hierarchical clustering. We picked this method of clustering over k-means and principle component analysis because we didn't know what the right number of k-clusters would be that would explain how to cluster our cases. Additionally, since our data set contains both meaningful binary and quantitative variables, it did not make sense to do dimension reduction on the data. Hierarchical clustering made the most sense because without guessing the number of clusters we would need, the distances between each cluster would tell us how to cluster DEATH_EVENT by a patient's cpk or platelet levels. We chose two of the quantitative variables that we used for other parts of our analysis, cpk and platelets and grouped whether or not a patient died, which resulted in 4 clusters. We used single linkage clustering to form our clusters because it made the most sentence to draw a connection between the clusters if we were using the shortest distance between points. The heights of the clusters from the resulting dendrogram indicate the distance between the clusters. The first set of clusters are 1 unit away from each other, showing they contain very similar information. The next set of clusters at a height of 2, shows the four clusters, based on death event and whether a patient met the threshold for cpk or platelets. The clusters at the height of 5 show whether a person died from heart failure. From these clusters we can group what patients died from heart failure if they had platelets or cpk. 
 ```{r}
+set.seed(253)
 health1 <- health1 %>%
     slice_sample(n = 50)
 
@@ -390,5 +384,6 @@ plot(hc_single)
 plot(hc_single, labels = health1$high_blood_pressure)
 plot(hc_single, labels = health1$sex)
 ```
-```
+We also made two more clusters that labeled the clusters on whether or not they had high blood pressure and sex of the patient. In the dendrogram that is labeled by blood pressure, the patient that died (??) had high blood pressure. Most of the patients that survived did not have high blood pressure although a few of them did. So from this we can conclude that high blood pressure is correlated with having high blood pressure. In the dendrogram that is labeled by sex, there is no connection to which sex was more likely to die from heart failure. 
+
 
