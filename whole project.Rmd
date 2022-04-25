@@ -158,10 +158,7 @@ mod_ols <- fit_resamples(lm_model_wf,
 
 Our analysis is more focused on interpretability than predictive accuracy as we are interested in which of our predictor variables have the greatest impact on a person's CPK (creatinine phosphokinase) levels rather than, for example, trying to predict a person's CPK levels based on other health indicators. High CPK levels usually indicate that there has been injury or stress to muscle tissue, the heart, or the brain. We want to see which health indicators have the strongest influence on damage to the body. We do not care to predict the CPK levels themselves as that does not carry much meaning for us.
 
-### Conclusions
-*Interpret you final model (show plots of estimated non-linear functions, or slope coefficients) for important predictors, and provide some general interpretations of what you learn from these
-Interpret evaluation metric(s) for the final model in context with units. Does the model show an acceptable amount of error?
-Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
+
 ```{r}
 gam_rec <- recipe(creatinine_phosphokinase ~ high_blood_pressure + age + anaemia + platelets + sex + serum_sodium + ejection_fraction, data = health_train)
 
@@ -207,6 +204,12 @@ mod_gam_spline <- gam_spline_wf %>%
 mod_gam_spline %>%
   collect_metrics()
 ```
+
+### Conclusions
+*Interpret you final model (show plots of estimated non-linear functions, or slope coefficients) for important predictors, and provide some general interpretations of what you learn from these
+Interpret evaluation metric(s) for the final model in context with units. Does the model show an acceptable amount of error?
+Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
+
 The models show us that there is probably not a linear relationship between CPK and the predictors because the rsq is so low and the mae is so high. On average, we expect an error of 1 in our predictions, and considering that the highest CPK is 9 and the lowest is 3, we expect our predictions to be off by a lot. In additon, an rsq of 0.08 tells us that barely any of the CPK can be explained by our predictors(8%). At the very least, linear regression does not accurately represent the relationship between our predictors and CPK, and at worst, there isn't a relationship between our predictors and CPK.When we fit a nonlinear model, we found that it was not much better than using OLS. 
 
 We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone expereinced heart failure. 
