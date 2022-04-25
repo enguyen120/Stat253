@@ -53,7 +53,9 @@ The data contains the medical records of 299 patients with criteria that would m
 
 
 ## Research question
-*Research question(s)/motivation for the regression task; make clear the outcome variable and its units.
+
+Research question(s)/motivation for the regression task; make clear the outcome variable and its units.
+
 Research question(s)/motivation for the classification task; make clear the outcome variable and its possible categories.
 
 
