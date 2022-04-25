@@ -65,7 +65,7 @@ Our research question for classification is, What predictors best predict death 
 
 ## Regression  
 ### Methods
-*Describe the models used.
+*Describe the models used. 
 Describe what you did to evaluate models.
 Indicate how you estimated quantitative evaluation metrics.
 Indicate what plots you used to evaluate models.
