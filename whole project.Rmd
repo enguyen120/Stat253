@@ -56,11 +56,15 @@ The data contains the medical records of 299 patients with criteria that would m
 
 Research question(s)/motivation for the regression task; make clear the outcome variable and its units.
 
+
+
 Research question(s)/motivation for the classification task; make clear the outcome variable and its possible categories.
 
+For the classification task, we were trying to predict whether a patient would die of heart failure and what predictors best predicted this. THe possible categories for the outcome variable were whether or not the patient died of heart failure (0 or 1).
 
+Research question(s)/motivation for the unsupervised learning task?
 
-Research question(s)/motivation for the unsupervised learning task*
+Our research question for unsupervised learning was to see what the most common indicator of heart failure caused the death of a patient. 
 
 
 Our research question for classification is, What predictors best predict death (DEATH_EVENT)? 
