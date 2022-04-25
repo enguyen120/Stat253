@@ -38,15 +38,15 @@ health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
 ```
 
 ## Data context
-*Clearly describe what the cases in the final clean dataset represent.
+*Clearly describe what the cases in the final clean dataset represent.*
 
 In our clean data set, a case is a person and specific variables in their medical records linked to a cardiovascular disease. These variables can be used to model and predict an instance of heart failure or (as the variable shows) a death event. 
 
-Broadly describe the variables used in your analyses.
+*Broadly describe the variables used in your analyses.*
 
 The variables in this dataset are ones that can be used to predict heart failure, a common and deadly cardiovascular disease. Variables such as sex of participant and certain variables like smoking, diabetes, high blood pressure, anemia, and death event are all categorical (and binary) variables in this data set. There are also variables measuring measuring creatinine and ejection fraction (which is the amount of blood leaving the heart during each contraction). There are variables measuring platelet count, creatinine, and sodium serum in the blood. 
 
-Who collected the data? When, why, and how? Answer as much of this as the available information allows.*
+*Who collected the data? When, why, and how? Answer as much of this as the available information allows.*
 
 The data contains the medical records of 299 patients with criteria that would make them at risk for heart failure. The data set was collected at the Faisalabad Institute of Cardiology and at the Allied Hospital in Punjab, Pakistan between  April and December 2015. 
 
@@ -54,16 +54,15 @@ The data contains the medical records of 299 patients with criteria that would m
 
 ## Research question
 
-Research question(s)/motivation for the regression task; make clear the outcome variable and its units.
+*Research question(s)/motivation for the regression task; make clear the outcome variable and its units.*
 
 For the regression task, we were trying to figure out what predictors had the greatest impact on CPK (creatinine phosphokinase). Our question was: What predictor had the greatest impact on CPK?
 
-
-Research question(s)/motivation for the classification task; make clear the outcome variable and its possible categories.
+*Research question(s)/motivation for the classification task; make clear the outcome variable and its possible categories.*
 
 For the classification task, we were trying to predict whether a patient would die of heart failure and what predictors best predicted this. The possible categories for the outcome variable were whether or not the patient died of heart failure (0 or 1).
 
-Research question(s)/motivation for the unsupervised learning task?
+*Research question(s)/motivation for the unsupervised learning task?*
 
 Our research question for unsupervised learning was to see what the most common indicator of heart failure caused the death of a patient. 
 
@@ -71,16 +70,16 @@ Our research question for unsupervised learning was to see what the most common 
 
 ## Regression  
 ### Methods
-*Describe the models used.
+*Describe the models used.*
 
 We used Ordinary Least Squares (OLS) and LASSO to build our model, which was to find what was greatest indicator of CPK levels. 
 
-Describe what you did to evaluate models.
+*Describe what you did to evaluate models.*
 
 We used different processing and the workflow to step over the predictors from CPK onwards to predict what had the greatest impact on CPK. 
 
 
-Describe the goals / purpose of the methods used in the overall context of your research investigations.*
+*Describe the goals / purpose of the methods used in the overall context of your research investigations.*
 
 The purpose of the methods used was the predict the greatest impact on CPK. This was done with LASSO because it helps us to predict variable importance and OLS is a better way to predict, so we used that afterwards. 
 
@@ -93,7 +92,7 @@ lm_spec <-
 ```
 
 
-Indicate how you estimated quantitative evaluation metrics.
+*Indicate how you estimated quantitative evaluation metrics.*
 
 ```{r}
 ## recipe and wf 
@@ -144,7 +143,7 @@ mod_ols <- fit_resamples(lm_model_wf,
 
 
 ### Results 
-*Summarize your final model and justify your model choice (see below for ways to justify your choice).
+*Summarize your final model and justify your model choice (see below for ways to justify your choice).*
 
 The models show us that there is probably not a linear relationship between CPK and the predictors because the rsq is so low and the mae is so high. On average, we expect an error of 1 in our predictions, and considering that the highest CPK is 9 and the lowest is 3, we expect our predictions to be off by a lot. In additon, an rsq of 0.08 tells us that barely any of the CPK can be explained by our predictors(8%). At the very least, linear regression does not accurately represent the relationship between our predictors and CPK, and at worst, there isn't a relationship between our predictors and CPK.
 
@@ -214,11 +213,9 @@ mod_gam_spline %>%
 ```
 
 ### Conclusions
-*Interpret you final model (show plots of estimated non-linear functions, or slope coefficients) for important predictors, and provide some general interpretations of what you learn from these
-Interpret evaluation metric(s) for the final model in context with units. Does the model show an acceptable amount of error?
-Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
+*Interpret you final model (show plots of estimated non-linear functions, or slope coefficients) for important predictors, and provide some general interpretations of what you learn from these. Interpret evaluation metric(s) for the final model in context with units. Does the model show an acceptable amount of error? Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
 
-We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone expereinced heart failure. 
+We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do. We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone experienced heart failure. In looking at our evaulation metrics, the r-squared of 0.53 means the model is explaining 53% of the variance in our model. This makes sense in context our goal within our analysis is to predict death event, so using regression methods, whether they be OLS, nonlinear models or LASSO are not explaining the relationship between all of the quantitative variables we are analyzing as they are all are more related to death event than each other.
 
 
 ## Classification  
@@ -310,16 +307,9 @@ logistic_output %>%
 ```
 
 ### Results
-*Summarize your final model and justify your model choice (see below for ways to justify your choice).
+*Summarize your final model and justify your model choice (see below for ways to justify your choice).Compare the different classification models tried in light of evaluation metrics, variable importance, and data context. Display evaluation metrics for different models in a clean, organized way. This display should include both the estimated metric as well as its standard deviation. (This won’t be available from OOB error estimation. If using OOB, don’t worry about reporting the SD.)Broadly summarize conclusions from looking at these evaluation metrics and their measures of uncertainty.*
 
-
-Compare the different classification models tried in light of evaluation metrics, variable importance, and data context.
-
-
-Display evaluation metrics for different models in a clean, organized way. This display should include both the estimated metric as well as its standard deviation. (This won’t be available from OOB error estimation. If using OOB, don’t worry about reporting the SD.)
-Broadly summarize conclusions from looking at these evaluation metrics and their measures of uncertainty.*
-
-In our final model we predicted the probability of someone dying using logistic regression. We chose decision trees over logistic regression because it has a higher likelihood it will correctly predict death at an accuracy rate of 85.61%; compared to our logistic regression model which has an accuracy of 82.27% on predicting death event. Since the sensitivity for the logistic regression is low, it is worse at predicting whether or not they will die, which is another reason why we've chosen the decision trees. Although the ROC AUC curve for logistic regression is 88%, it is still not the same as the actual prediction of the death event, which is lower than logistic regression.For the decision trees, the predictors that had the biggest impact on the final result of predicting death event are ejection fraction, cpk, age and serum creatinine.
+In our final model we predicted the probability of someone dying using logistic regression. We chose decision trees over logistic regression because it has a higher likelihood it will correctly predict death at an accuracy rate of 85.61%; compared to our logistic regression model which has an accuracy of 82.27% on predicting death event. Since the sensitivity for the logistic regression is low, it is worse at predicting whether or not they will die, which is another reason why we've chosen the decision trees. Although the ROC AUC curve for logistic regression is 88%, it is still not the same as the actual prediction of the death event, which is lower than logistic regression.For the decision trees, the predictors that had the biggest impact on the final result of predicting death event are ejection fraction, cpk, age and serum creatinine. From looking at our evaulation metrics we can conclude that 
 
 **OOB**
 ```{r}
@@ -378,15 +368,14 @@ collect_metrics(log_cv_fit)
 ```
 
 ### Conclusions
-*Interpret evaluation metric(s) for the final model in context. Does the model show an acceptable amount of error?
-If using OOB error estimation, display the test (OOB) confusion matrix, and use it to interpret the strengths and weaknesses of the final model.
-Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
+*Interpret evaluation metric(s) for the final model in context. Does the model show an acceptable amount of error? If using OOB error estimation, display the test (OOB) confusion matrix, and use it to interpret the strengths and weaknesses of the final model.Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
 
-The model does not show an acceptable amount of error because if was told that the prediction of a death event (or not dying) was 85% correct, it is quite low. In our OOB confusion matrix, there were 187 people whose that were predicted to not happen and did not happen, 26 people whose deaths we predicted to not happen but happened, 17 people who we predicted to die and did not die and 70 people who we predicted to die who died. Ideally, the model would have as close to 100% accuracy to predict a death event, furthermore we would prefer the model to predict that someone was going to die and they don't die versus the opposite. Given the context of our data, our results are not sensible and our model should not be used to predict death event of these heart failure patients, since we have too much error to be predicting death. 
+The model does not show an acceptable amount of error because if was told that the prediction of a death event (or not dying) was 85% accurate, it is quite low. In our confusion matrix, there were 187 people whose that were predicted to not happen and did not happen, 26 people whose deaths we predicted to not happen but happened, 17 people who we predicted to die and did not die and 70 people who we predicted to die who died. Ideally, the model would have as close to 100% accuracy to predict a death event and we would prefer the model to predict that someone was going to die and they don't die versus the opposite. Our ROC AUC, our model is further evidence that our model does not explain the relationship between death event and our selected variables. Given the context of our data, our results are not sensible and our model should not be used to predict death event of these heart failure patients, since we have too much error to be predicting death. 
 
  
+## Unsupervised learning clustering
 
-## Unsupervised learning clustering.
+*Choose one method for clustering. Justify the choice of features included in a distance measure based on the research goals. Justify the choice of k and summarize resulting clusters. Interpret the clusters qualitatively. Evaluate clusters quantitatively (kmeans: within cluster sum of squares, pam: silhouette, hclust: height of cut on dendrogram). If appropriate, show visuals to justify your choices.Summarize what information you gain from the clustering in context (tell a story)*
 
 In our consideration of what variables impacted the chances of a person dying from heart failure, we decided to use un supervised learning to see what  the most common indicator of heart failure caused a death event. The method that we chose for clustering was hierarchical clustering. We picked this method of clustering over k-means and principle component analysis because we didn't know what the right number of k-clusters would be that would explain how to cluster our cases. Additionally, since our data set contains both meaningful binary and quantitative variables, it did not make sense to do dimension reduction on the data. Hierarchical clustering made the most sense because without guessing the number of clusters we would need, the distances between each cluster would tell us how to cluster DEATH_EVENT by a patient's cpk or platelet levels. We chose two of the quantitative variables that we used for other parts of our analysis, cpk and platelets and grouped whether or not a patient died, which resulted in 4 clusters. We used single linkage clustering to form our clusters because it made the most sentence to draw a connection between the clusters if we were using the shortest distance between points. The heights of the clusters from the resulting dendrogram indicate the distance between the clusters. The first set of clusters are 1 unit away from each other, showing they contain very similar information. The next set of clusters at a height of 2, shows the four clusters, based on death event and whether a patient met the threshold for cpk or platelets. The clusters at the height of 5 show whether a person died from heart failure. From these clusters we can group what patients died from heart failure if they had platelets or cpk. 
 ```{r}
@@ -411,6 +400,6 @@ plot(hc_single, labels = health1$high_blood_pressure)
 plot(hc_single, labels = health1$sex)
 ```
 
-We also made two more clusters that labeled the clusters on whether or not they had high blood pressure and sex of the patient. In the dendrogram that is labeled by blood pressure, the patient that died (??) had high blood pressure. Most of the patients that survived did not have high blood pressure although a few of them did. So from this we can conclude that high blood pressure is correlated with having high blood pressure. In the dendrogram that is labeled by sex, there is no connection to which sex was more likely to die from heart failure. 
+We also made two more clusters that labeled the clusters on whether or not they had high blood pressure and sex of the patient. In the dendrogram that is labeled by blood pressure, the patient that died had high blood pressure. Most of the patients that survived did not have high blood pressure although a few of them did. So from this we can conclude that high blood pressure is correlated with having high blood pressure. In the dendrogram that is labeled by sex, there is no connection to which sex was more likely to die from heart failure. 
 
 
