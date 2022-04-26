@@ -1,12 +1,14 @@
 ---
 title: "whole project"
-author: "Amelia Ryan"
+author: "Ben Christensen, Amelia Ryan, Cecelia Kaufmann, Emma Nguyen and Caedmon Kollmer-Dorsey"
 date: "4/21/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 # Final Project: Stat 253 - Statistical Machine Learning
-### Ben Christensen, Amelia Ryan, Cecelia Kaufmann, Emma Nguyen and Caedmon Kollmer-Dorsey
+### 
 ### May 9th, 2022 
 ```{r}
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE)
@@ -386,6 +388,7 @@ health2 <- health1 %>%
 health2_sub <- health2 %>%
     select(creatinine_phosphokinase, DEATH_EVENT, platelets)
 
+health2_sub$DEATH_EVENT=as.numeric(health2_sub$DEATH_EVENT)
 summary(health2_sub)
 
 dist_mat_scaled <- dist(scale(health2_sub))
