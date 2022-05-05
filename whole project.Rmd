@@ -149,6 +149,8 @@ mod_ols <- fit_resamples(lm_model_wf,
 
 The models show us that there is probably not a linear relationship between CPK and the predictors because the rsq is so low and the mae is so high. On average, we expect an error of 1 in our predictions, and considering that the highest CPK is 9 and the lowest is 3, we expect our predictions to be off by a lot. In addition, an rsq of .07 tells us that barely any (7%) of the variation in CPK can be explained by the variance of our predictors. At the very least, linear regression does not accurately represent the relationship between our predictors and CPK, and at worst, there isn't a relationship between our predictors and CPK.
 
+That being said, if we had to choose one of these models, the OLS model has a tiny bit more explanatory value (it has a slightly higher r squared) so we would opt to use that over the LASSO.
+
 
 ```{r}
 mod_new <- lm_fit_train %>% 
