@@ -1,0 +1,316 @@
+
+---
+title: "Code Appendix"
+author: "Ben Christensen, Amelia Ryan, Cecelia Kaufmann, Emma Nguyen and Caedmon Kollmer-Dorsey"
+date: "May 9th, 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Final Project: Stat 253 - Statistical Machine Learning Code Appendix
+### 
+### May 9th, 2022 
+```{r}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, tidy = TRUE)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+library(astsa)
+library(splines)
+library(tidymodels)
+library(gridExtra)
+library(vip)
+library(probably)
+tidymodels_prefer()
+conflicted::conflict_prefer("vi", "vip")
+```
+
+```{r}
+health1 <- read.csv("heart_failure_clinical_records_dataset.csv")
+```
+
+```{r}
+set.seed(321)
+
+data_split <- initial_split(health1, prop = 0.75,strata = creatinine_phosphokinase) #Create Train/Test set
+health_train <- training(data_split) # Fit model to this
+health_test  <- testing(data_split)
+health_cv13 <- vfold_cv(health_train, v = 13, strata = creatinine_phosphokinase)
+```
+
+## Regression  
+### OLS 
+
+```{r}
+# model spec 
+lm_spec <- 
+    linear_reg() %>% 
+    set_engine(engine = 'lm') %>% 
+    set_mode('regression') 
+```
+
+```{r}
+## recipe and workflow 
+life_rec<-recipe(creatinine_phosphokinase ~ ., data = health_train) %>%
+  step_nzv(all_numeric_predictors()) %>%
+  step_corr(all_numeric_predictors()) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+training_prep <- life_rec %>%
+  prep() %>%
+  juice()
+
+lm_model_wf <- workflow() %>%
+  add_recipe(life_rec) %>% 
+  add_model(lm_spec)
+
+lm_fit_train <- lm_model_wf %>%
+  fit(data=health_train)
+
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(lm_fit_train, health_train)) %>%
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)
+
+lm_fit_train %>%
+  tidy()
+
+lm_fit_cv <- fit_resamples(lm_model_wf, resamples =health_cv13, metrics = metric_set(rmse, mae, rsq))
+
+lm_fit_cv %>% 
+  collect_metrics()
+
+lm_fit_test <- last_fit(lm_model_wf,
+         split = data_split) 
+
+lm_fit_test %>%
+  collect_metrics()
+```
+
+```{r}
+mod_ols <- fit_resamples(lm_model_wf, 
+      resamples = health_cv13, 
+      metrics = metric_set(rmse, rsq, mae)
+      )  %>%
+      collect_metrics(summarize = TRUE)
+```
+
+```{r}
+mod_new <- lm_fit_train %>% 
+    predict(new_data = health1) %>%
+    bind_cols(health1) %>%
+    mutate(resid = creatinine_phosphokinase - .pred)
+
+ggplot(mod_new, aes(x = .pred, y = resid)) +
+    geom_point() +
+    geom_smooth() +
+    geom_hline(yintercept = 0, color = "red") +
+    theme_classic()
+```
+
+### GAMs
+
+```{r}
+gam_rec <- recipe(creatinine_phosphokinase ~ high_blood_pressure + age + anaemia + platelets + sex + serum_sodium + ejection_fraction, data = health_train)
+
+gam_spline_rec <- gam_rec %>%
+   step_ns(high_blood_pressure, deg_free = 1) %>% 
+     step_ns(age, deg_free = 1) %>%
+     step_ns(anaemia, deg_free = 1) %>%
+     step_ns(platelets, deg_free = 1) %>%
+     step_ns(sex, deg_free = 1) %>%
+     step_ns(serum_sodium, deg_free = 1) %>%
+     step_ns(ejection_fraction, deg_free = 1)
+
+gam_spline_wf <- workflow() %>%
+    add_model(lm_spec) %>%
+    add_recipe(gam_spline_rec)
+```
+
+```{r}
+# fit model 
+gam_spline_fit_train <- gam_spline_wf %>%
+  fit( data = health_train)
+
+gam_spline_fit_train %>%
+  tidy()
+```
+
+
+```{r}
+training_prep %>%
+  select(creatinine_phosphokinase) %>%
+  bind_cols( predict(gam_spline_fit_train, health_train) ) %>% 
+  metrics(estimate = .pred, truth = creatinine_phosphokinase)  
+```
+
+
+```{r}
+mod_gam_spline <- gam_spline_wf %>%
+  fit_resamples(resamples = health_cv13,
+                metrics = metric_set(rmse, mae, rsq))
+
+mod_gam_spline %>%
+  collect_metrics()
+```
+
+## Classification  
+### Logistic Regression
+```{r}
+
+health1 <- health1 %>%
+mutate(DEATH_EVENT = relevel(factor(DEATH_EVENT), ref= '0'))
+
+health_cv13 <- vfold_cv(health1, v = 13)
+
+logistic_spec <- logistic_reg() %>%
+  set_engine('glm') %>%
+  set_mode('classification')
+
+logistic_rec <- recipe(DEATH_EVENT ~ ., data = health1) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+log_wf <- workflow() %>%
+  add_recipe(logistic_rec)%>%
+  add_model(logistic_spec)
+
+log_fit <- fit(log_wf, data = health1)
+
+
+log_fit %>% tidy() %>%
+  mutate(OR.conf.low = exp(estimate- 1.96*std.error),OR.conf.high = exp(estimate + 1.96*std.error)) %>%
+  mutate(OR = exp(estimate))
+```
+
+**Predictions on the Logistic Model**
+
+```{r}
+predict(log_fit, new_data = health1, type = "prob")
+
+predict(log_fit, new_data = health1, type = "class")
+```
+
+```{r}
+logistic_output <-  health1 %>%
+  bind_cols(predict(log_fit, new_data = health1, type = 'prob')) 
+
+logistic_output <- logistic_output %>%
+  mutate(.pred_class = make_two_class_pred(`.pred_0`, levels(DEATH_EVENT), threshold = .5)) 
+
+logistic_output %>%
+  ggplot(aes(x = DEATH_EVENT, y = .pred_1)) +
+  geom_boxplot() + 
+  geom_hline(yintercept = 0.5, color='red') + 
+  labs(y = 'Predicted Probability of Outcome', x = 'Observed Outcome') +
+  theme_classic()
+```
+
+**logistic regression cross validation**
+```{r}
+logistic_output %>%
+  conf_mat(truth = DEATH_EVENT, estimate = .pred_class)
+
+log_metrics <- metric_set(sens, yardstick::spec, accuracy) 
+
+logistic_output %>% 
+  log_metrics(estimate = .pred_class, truth = DEATH_EVENT, event_level = "second")
+```
+
+```{r}
+logistic_roc <- logistic_output %>% 
+    roc_curve(DEATH_EVENT, .pred_1, event_level = "second")
+
+autoplot(logistic_roc) + theme_classic()
+```
+
+```{r}
+log_cv_fit <- fit_resamples(
+    log_wf, 
+    resamples = health_cv13,
+    metrics = metric_set(sens, yardstick::spec, accuracy, roc_auc),
+    control = control_resamples(save_pred = TRUE, event_level = 'second'))  
+
+collect_metrics(log_cv_fit) 
+```
+
+### Decision Trees 
+
+```{r}
+
+health1$DEATH_EVENT <- as.factor(health1$DEATH_EVENT)
+
+rf_spec <- rand_forest() %>%
+  set_engine(engine = 'ranger') %>% 
+  set_args( floor(sqrt(13)),
+           trees = 1000, 
+           min_n = 2,
+           probability = FALSE, 
+           importance = 'impurity') %>%
+  set_mode('classification') 
+
+data_rec <- recipe(DEATH_EVENT ~ ., data = health1) 
+
+
+data_wf <- workflow() %>%
+  add_model(rf_spec ) %>%
+  add_recipe(data_rec)
+
+data_fit <- fit(data_wf, data = health1)
+```
+
+**OOB**
+```{r}
+rf_OOB_output <- function(fit_model, model_label, truth){
+    tibble(
+          .pred_class = fit_model %>% extract_fit_engine() %>% pluck('predictions'), #OOB predictions
+          class = truth,
+          label = model_label
+      )
+}
+
+
+rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT))
+```
+
+```{r}
+data_rf_OOB_output <- bind_rows(
+    rf_OOB_output(data_fit, sqrt(13), health1 %>% pull(DEATH_EVENT)))
+
+data_rf_OOB_output %>% 
+    group_by(label) %>%
+    accuracy(truth = class, estimate = .pred_class)
+```
+
+```{r}
+rf_OOB_output(data_fit,12, health1 %>% pull(DEATH_EVENT)) %>%
+    conf_mat(truth = class, estimate= .pred_class)
+```
+
+## Unsupervised learning - Hierarchial Clustering
+
+```{r}
+set.seed(253)
+health2 <- health1 %>%
+    slice_sample(n = 50)
+
+health2_sub <- health2 %>%
+    select(creatinine_phosphokinase, DEATH_EVENT, platelets)
+
+health2_sub$DEATH_EVENT=as.numeric(health2_sub$DEATH_EVENT)
+summary(health2_sub)
+
+dist_mat_scaled <- dist(scale(health2_sub))
+
+hc_single <- hclust(dist_mat_scaled, method = "single")
+
+plot(hc_single)
+```
+
+```{r}
+plot(hc_single, labels = health2$high_blood_pressure)
+plot(hc_single, labels = health2$sex)
+```
