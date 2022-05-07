@@ -62,7 +62,7 @@ For the classification task, we were trying to predict whether a patient would d
 
 *Research question(s)/motivation for the unsupervised learning task?*
 
-For the unsupervised learning tas we were trying to  was to see what the most common indicator of heart failure caused the death of a patient. 
+For the unsupervised learning task we were trying to  was to see what the most common indicator of heart failure caused the death of a patient. 
 
 
 ## Regression  
@@ -214,7 +214,7 @@ mod_gam_spline %>%
 ### Conclusions
 *Interpret you final model (show plots of estimated non-linear functions, or slope coefficients) for important predictors, and provide some general interpretations of what you learn from these.*
 
-We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and women are more likely to experience heart failure than men. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do.
+We found that age, sex, sodium and platelets are the biggest predictors of CPK. This makes sense because sodium and platelets affect the amount of oxygen in the bloodstream, and would affect someone's CPK. Additionally, it makes sense that age and sex are important predictors because the older someone is, the more likely they are to have heart failure and men are more likely to experience heart failure than women. At the moment, the methods that we've applied to reach a consensus on which variables are most important makes sense because when we used LASSO, the algorithm penalized all of the variables that do not add much to the model, leaving us with the ones that do.
 
 *Interpret evaluation metric(s) for the final model in context with units. Does the model show an acceptable amount of error? Summarization should show evidence of acknowledging the data context in thinking about the sensibility of these results.*
 We were a little surprised at first that sex was a significant predictor because it seemed at first to be exogenous to whether or not someone experienced heart failure. In looking at our evaluation metrics, the r-squared of 0.53 means the model is explaining 53% of the variance in CPK. This makes sense in context our goal within our analysis is to predict death event, so using regression methods, whether they be OLS, nonlinear models or LASSO are not explaining the relationship between all of the quantitative variables we are analyzing as they are all are more related to death event than each other.
